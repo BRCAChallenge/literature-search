@@ -383,8 +383,21 @@ class VariantDescription(object):
     def getName(self):
         " return HGVS text for this variant "
         # logger.debug("Creating HGVS type %s for vars %s" % (hgvsType, variants))
-        if self.seqId == None:
-            name = "p.%s%d%s" % (self.origSeq, self.start, self.mutSeq)
+        if self.seqId == None and self.mutType != "dbSnp":
+            if self.seqType == "prot":
+                name = "p.%s%d%s" % (self.origSeq, self.start, self.mutSeq)
+            elif self.seqType == "dna":
+                if self.offset == 0:
+                    name = "c.%d%s>%s" % (self.start, self.origSeq, self.mutSeq)
+                elif self.offset > 0:
+                    name = "c.%d+%d%s>%s" % (self.start, self.offset, self.origSeq, self.mutSeq)
+                else:
+                    name = "c.%d%d%s>%s" % (self.start, self.offset, self.origSeq, self.mutSeq)
+            elif self.seqType == "intron":
+                if self.offset > 0:
+                    name = "IVS%d+%d%s>%s" % (self.start, self.offset, self.origSeq, self.mutSeq)
+                else:
+                    name = "IVS%d%d%s>%s" % (self.start, self.offset, self.origSeq, self.mutSeq)
         elif self.mutType == "dbSnp":
             name = self.origSeq
         else:
@@ -819,7 +832,12 @@ def makeHgvsStr(seqType, seqId, origSeq, pos, mutSeq):
     elif seqType == "rna":
         desc = "%s:r.%d%s>%s" % (seqId, pos, origSeq, mutSeq)
     elif seqType == "dna":
-        desc = "%s:c.%d%s>%s" % (seqId, pos, origSeq, mutSeq)
+        if offset == 0:
+            desc = "%s:c.%s%s>%s" % (seqId, pos, origSeq, mutSeq)
+        elif offset > 0:
+            desc = "%s:c.%s%+s%s>%s" % (seqId, pos, offset, origSeq, mutSeq)
+        else:
+            desc = "%s:c.%s%s%s>%s" % (seqId, pos, offset, origSeq, mutSeq)
     return desc
 
 def firstDiffNucl(str1, str2, maxDiff=1):
@@ -1324,7 +1342,18 @@ def groundVariant(docId, text, variant, mentions, snpMentions, entrezGenes, inse
         # ungroundVar = ungroundedMutToFakeSeqVariant(variant, mentions, text)
     ungroundVar = None
     if not groundSuccess:
-        ungroundVar = SeqVariantData(seqType=variant.seqType, mentions=mentions, text=text)
+        codVars = []
+        protVars = []
+        if variant.seqType == "prot":
+            protVars = [variant]
+        elif variant.seqType == "dna" or variant.seqType == "intron":
+            codVars = [variant]
+        if len(entrezGenes) > 0:
+            gene = findClosestGeneMention(mentions, entrezGenes)
+            geneSym = geneData.entrezToSym(gene)
+            ungroundVar = SeqVariantData(seqType=variant.seqType, codVars=[variant], mentions=mentions, text=text, entrezGene=gene, geneSym=geneSym)
+        else: 
+            ungroundVar = SeqVariantData(seqType=variant.seqType, codVars=[variant], mentions=mentions, text=text)
 
     unmappedRsVars = unmappedRsVarsToFakeVariants(snpMentions, mappedRsIds, text)
     # ungroundVarData.extend(unmappedRsVars)
