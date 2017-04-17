@@ -273,7 +273,7 @@ CONVERTERS = {
     "xml":"XMLTEXT",
     "nxml":"NXMLTEXT",
     "pdf":"pdftotext -q -nopgbrk -enc UTF-8 -eol unix $in $out",
-    "pdf2":"java -Xmx512m -jar %(extToolDir)s/pdfbox-app-1.6.0.jar ExtractText $in $out -encoding utf8"
+    "pdf2":"java -Xmx512m -jar %(extToolDir)s/pdfbox-app-2.0.4.jar ExtractText $in $out -encoding utf8"
 }
 
 # sometimes (e.g. if downloaded from the web) we don't have a file extension, but only 
