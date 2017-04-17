@@ -73,8 +73,13 @@ def initCaches(inDir):
 
 def processText(pmid, title, abstract, text, writer, dbAnnots):
     text = text.replace("\a", "\n")
-    genes, exclPos = findGenesCached(pmid, text)
-
+    fullGenes, exclPos = findGenesCached(pmid, text)
+    # Hard code BRCA1 and BRCA2 as genes to look for
+    genes = {}
+    for gene in [672, 675]:
+        if gene in fullGenes:
+            genes[gene] = fullGenes[gene]
+    # Hard code BRCA1 and BRCA2 as genes to look for
     mutations  = varFinder.findVariantDescriptions(text, exclPos)
     dbAnnots.newDocument(pmid)
     for variant, mentions in mutations["prot"]:
