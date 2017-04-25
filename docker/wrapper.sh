@@ -8,6 +8,8 @@ numPMIDs=9999999
 synapseDir=syn8506589
 synapseOutDir=$synapseDir
 synapseDataDir=syn8520180
+pmidFile=syn8683574
+mutationFile=syn8683582
 test=false
 
 while getopts u:p:t option
@@ -25,13 +27,15 @@ if $test
     numPMIDs=25
     synapseDir=syn8532321
     synapseOutDir=syn9620237
+    pmidFile=syn8532670
+    mutationFile=syn8532671
 fi
 
 $optdir/download.sh
 
 # Download data from Synapse to /workdir/pubMunch/data
 
-if [[! -z $synapseUsername && ! -z $synapsePassword]]
+if [ -n $synapseUsername ] && [ -n $synapsePassword ]
   then
    synapse login -u $synapseUsername -p $synapsePassword --rememberMe
    loggedIn=true
@@ -53,7 +57,7 @@ python $optdir/getpubs.py $workdir/pubmedResponse.xml > $workdir/allPmids.txt
 
 # Download list of previously crawled PMIDs from synapse
 # TODO
-synapse get syn8683574 --downloadLocation $workdir
+synapse get $pmidFile --downloadLocation $workdir
 #touch $workdir/crawledPmids.txt
 
 # Determine which PMIDs are new since the last run
@@ -64,7 +68,7 @@ grep -F -x -v -f $workdir/crawledPmids.txt $workdir/allPmids.txt > $workdir/Craw
 if [[ $(wc -l $workdir/Crawl/pmids.txt | awk '{print $1}') -ge 1 ]]
   then 
     # Crawl the new PMIDs
-    $workdir/pubMunch/pubCrawl2 -du $workdir/Crawl
+    $workdir/pubMunch/pubCrawl2 -du --forceContinue $workdir/Crawl
 
     # Convert crawled papers to text
     $workdir/pubMunch/pubConvCrawler $workdir/Crawl $workdir/CrawlText
@@ -75,7 +79,7 @@ fi
 
 # Download previously found mutations
 # TODO
-synapse get syn8683582 --downloadLocation $workdir
+synapse get $mutationFile --downloadLocation $workdir
 #touch $workdir/foundMutations.tsv
 #echo "this is a header line\n" > $workdir/foundMutations.tsv
 
