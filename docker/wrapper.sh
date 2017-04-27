@@ -91,6 +91,10 @@ cp $workdir/allPmids.txt $workdir/crawledPmids.txt
 
 if $loggedIn
   then
+    # Update version number. This is necessary due to a Synapse upload issue
+    oldVersion=`head -1 $workdir/foundMutations.tsv | awk -F '\t' '{print $NF}'`
+    newVersion=`expr $oldVersion + 1`
+    sed -i "1/$oldVersion/$newVersion/g" $workdir/foundMutations.tsv
     synapse add $workdir/foundMutations.tsv --parentId=$synapseOutDir
     synapse add $workdir/crawledPmids.txt --parentId=$synapseOutDir
 fi
