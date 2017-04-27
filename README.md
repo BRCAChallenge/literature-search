@@ -1,3 +1,8 @@
+# 
+
+This version of PubMunch has been adapted for use with BRCA Exchange from Maximilian Haeussler's original code. The gene finder is limited to BRCA1 and BRCA2, and DNA
+intronic and exonic variants have been enabled. The documentation below is copied from Max's repositiory.
+
 # Overview
 
 These are the tools that I wrote for the UCSC Genocoding project, see

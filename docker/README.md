@@ -27,13 +27,13 @@ In order to get full functionality of the pipeline, it should be run on a
 server with institutional credentials to allow access to publications. A
 proxy can also be passed to `docker run` with the option
 
-```--env http_proxy="http://user:password@host:port"```
+```--env http_proxy="http://<user>:<password>@<host>:<port>"```
 
 The container can also be run with Synapse credentials so the results are uploaded
-to the BRCA Exchange Literature Searching folder, as follows:
+to the BRCA Exchange Literature Searching folder (https://www.synapse.org/#!Synapse:syn8506589), as follows:
 
 ```docker run quay.io/almussel/pubmunch-docker -u <username> -p <password>```
 
-Without these credentials, the output of the pipeline will be stored locally.
+Without these credentials, the pipeline must be run with .
 
-To run the pipeline on a small sample of 20 pmids, use the `-t` option. 
+To run the pipeline on a small sample of 25 pmids, use the `-t` option. The output of test runs will be uploaded to the test/output folder on Synapse.
