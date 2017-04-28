@@ -1,5 +1,6 @@
 data/
 external/
+docker/runtime-container.DONE
 
 # Python compiled files
 *.py[co1]
