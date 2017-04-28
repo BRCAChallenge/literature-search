@@ -5,7 +5,7 @@ id: "pubMunch-docker"
 label: "pubMunch-docker tool"
 cwlVersion: v1.0 
 doc: |
-    ![build_status](https://quay.io/repository/almussel/pubmunch-docker/status)
+    ![build_status](https://quay.io/repository/brca_challenge/pubmunch-brca/status)
     A Docker container for running the Literature Searching pipeline for BRCA Exchange. Documentation for PubMunch can be found at github.com/almussel/pubmunch
 
 dct:creator:
@@ -15,7 +15,7 @@ dct:creator:
 
 requirements:
   - class: DockerRequirement
-    dockerPull: "quay.io/almussel/pubmunch-docker"
+    dockerPull: "quay.io/brca_challenge/pubmunch-brca"
 
 inputs:
   username:

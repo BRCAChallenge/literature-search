@@ -1,6 +1,6 @@
 build_tool = runtime-container.DONE
 git_commit ?= $(shell git log --pretty=oneline -n 1 -- ../pubMunch | cut -f1 -d " ")
-name = quay.io/almussel/pubmunch-docker
+name = quay.io/brca_challenge/pubmunch-brca
 tag = latest
 
 build: ${build_tool}
