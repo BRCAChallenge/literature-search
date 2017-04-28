@@ -7,7 +7,7 @@ import re
 import os
 from ga4gh.client import client
 
-BRCA_GA4GH_URL = "http://brcaexchange-dev.cloudapp.net:9004/data/ga4gh/v0.6.0a7/" # URL for BRCA Exchange GA4GH instance
+BRCA_GA4GH_URL = "http://brcaexchange.org/backend/data/ga4gh/v0.6.0a7/" # URL for BRCA Exchange GA4GH instance
 
 # BRCA 1 and 2 locations
 BRCA1_NAME = "BRCA1"
