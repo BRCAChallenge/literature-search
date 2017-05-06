@@ -134,7 +134,7 @@ def main(args):
     variantFile = args[0]
     pubsFile = args[1]
     outFile = args[2]
-    brcaFile = "/work/brcavars.json"
+    brcaFile = "/tmp/brcavars.json"
 
     brca1 = Gene(BRCA1_NAME, BRCA1_CHR, BRCA1_START, BRCA1_END)
     brca2 = Gene(BRCA2_NAME, BRCA2_CHR, BRCA2_START, BRCA2_END)

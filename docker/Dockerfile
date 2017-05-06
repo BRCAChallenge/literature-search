@@ -2,7 +2,7 @@ FROM ubuntu
 
 MAINTAINER Audrey Musselman-Brown, almussel@ucsc.edu
 
-RUN apt-get update && apt-get install -y git python-gdbm python-pip xvfb firefox wget poppler-utils default-jre
+RUN apt-get update && apt-get install -y git python-gdbm python-pip xvfb firefox wget poppler-utils default-jre catdoc
 RUN pip install numpy
 RUN pip install biopython pygr requests selenium==3.3.0 pyvirtualdisplay html2text==2016.9.19 synapseclient
 RUN pip install ga4gh==0.3.5 || true
