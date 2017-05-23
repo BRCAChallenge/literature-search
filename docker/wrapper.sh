@@ -56,7 +56,6 @@ wget -O $workdir/pubmedResponse.xml $pubmedURL
 python $optdir/getpubs.py $workdir/pubmedResponse.xml > $workdir/allPmids.txt
 
 # Download list of previously crawled PMIDs from synapse
-# TODO
 synapse get $pmidFile --downloadLocation $workdir
 #touch $workdir/crawledPmids.txt
 
@@ -78,15 +77,14 @@ if [[ $(wc -l $workdir/Crawl/pmids.txt | awk '{print $1}') -ge 1 ]]
 fi
 
 # Download previously found mutations
-# TODO
 synapse get $mutationFile --downloadLocation $workdir
 #touch $workdir/foundMutations.tsv
 #echo "this is a header line\n" > $workdir/foundMutations.tsv
 
 cat $workdir/foundMutations.tsv  <(tail -n +2 $workdir/mutations.tsv) > $workdir/all_mutations.tsv
+(head -n 1 $workdir/all_mutations.tsv && tail -n +2 $workdir/all_mutations.tsv | sort) > $workdir/foundMutations.tsv
 
 echo "Uploading PubMunch results"
-cp $workdir/all_mutations.tsv $workdir/foundMutations.tsv
 cp $workdir/allPmids.txt $workdir/crawledPmids.txt
 
 if $loggedIn
