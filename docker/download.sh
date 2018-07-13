@@ -1,11 +1,14 @@
 #!/usr/bin/env bash
 
-TMPDIR=/tmp
+TMPDIR=/home/joe/pmwork
+#PDFBOX="https://repo1.maven.org/maven2/org/apache/pdfbox/pdfbox-app/2.0.5/pdfbox-app-2.0.5.jar"
 
-git clone https://github.com/BRCAChallenge/pubMunch-BRCA.git $TMPDIR/pubMunch
+#git clone https://github.com/BRCAChallenge/pubMunch-BRCA.git $TMPDIR/pubMunch
+cp -R /home/joe/pubMunch-BRCA $TMPDIR/pubMunch
 
 mkdir $TMPDIR/pubMunch/external
 mirror=$(python -c "from urllib2 import urlopen; import json; print json.load( urlopen('http://www.apache.org/dyn/closer.lua?path=$path&asjson=1'))['preferred']")
-wget -O $TMPDIR/pubMunch/external/pdfbox-app-2.0.5.jar ${mirror}pdfbox/2.0.5/pdfbox-app-2.0.5.jar
-wget -O $TMPDIR/pubMunch/external/docx2txt-1.4 https://sourceforge.net/projects/docx2txt/files/latest/download
+wget -O $TMPDIR/pubMunch/external/pdfbox-app-2.0.11.jar ${mirror}pdfbox/2.0.11/pdfbox-app-2.0.11.jar
+wget -O $TMPDIR/pubMunch/external/docx2txt-1.4.tgz https://sourceforge.net/projects/docx2txt/files/latest/download
+tar -xzf $TMPDIR/pubMunch/external/docx2txt-1.4.tgz
 

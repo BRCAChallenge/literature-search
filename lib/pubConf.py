@@ -256,7 +256,7 @@ extToolDir = _sourceDir+"/external"
 # you can define variables and use them, see extToolDir
 CONVERTERS = {
     "doc":"catdoc $in > $out",
-    "docx":"%(extToolDir)s/docx2txt-1.2/docx2txt.pl < $in > $out",
+    "docx":"%(extToolDir)s/docx2txt-1.4/docx2txt.pl < $in > $out",
     "xls":"xls2csv $in > $out",
     "xlsx":"ssconvert $in $out",
     "ppt":"catppt $in > $out",
@@ -273,7 +273,7 @@ CONVERTERS = {
     "xml":"XMLTEXT",
     "nxml":"NXMLTEXT",
     "pdf":"pdftotext -q -nopgbrk -enc UTF-8 -eol unix $in $out",
-    "pdf2":"java -Xmx512m -jar %(extToolDir)s/pdfbox-app-2.0.5.jar ExtractText $in $out -encoding utf8"
+    "pdf2":"java -Xmx512m -jar %(extToolDir)s/pdfbox-app-2.0.11.jar ExtractText $in $out -encoding utf8"
 }
 
 # sometimes (e.g. if downloaded from the web) we don't have a file extension, but only 
