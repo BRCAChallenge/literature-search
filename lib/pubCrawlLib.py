@@ -11,7 +11,7 @@
 import logging, os, shutil, tempfile, codecs, re, types, datetime, \
     urllib2, re, zipfile, collections, urlparse, time, atexit, socket, signal, \
     sqlite3, doctest, urllib, hashlib, string, copy, cStringIO, mimetypes, httplib, \
-    traceback
+    traceback, json
 from os.path import *
 from collections import defaultdict, OrderedDict
 from distutils.spawn import find_executable
@@ -1850,7 +1850,7 @@ class ElsevierApiCrawler(Crawler):
 
     def crawl(self, url):
         delayTime = crawlDelays["elsevier-api"]
-	pdfUrl = None
+        pdfUrl = None
         if "%2F" in url:
             parts = url.split("%2F")
         else:
@@ -1882,6 +1882,8 @@ class ElsevierCrawler(Crawler):
         pList = ["10.1378", "10.1016", "10.1038"]
         for prefix in pList:
             if artMeta["doi"].startswith(prefix):
+                if artMeta["eIssn"]=="2045-2322":
+                    return False
                 return True
 
         return None
@@ -1933,28 +1935,35 @@ class ElsevierCrawler(Crawler):
         # strip the navigation elements from the html
         html = htmlPage["data"]
         bs = BeautifulSoup(html)
-        mainCont = bs.find("div", id='centerInner')
-        if mainCont!=None:
-            htmlPage["data"] = str(mainCont)
         htmlPage["url"] = htmlPage["url"].replace("?np=y", "")
         paperData["main.html"] = htmlPage
 
         # main PDF
-        pdfEl = bs.find("a", attrs={"class":"pdf-link track-usage usage-pdf-link article-download-switch pdf-download-link"})
-        if pdfEl==None:
-            logging.debug("Could not find elsevier PDF")
+        jsonEl = bs.find("script", attrs={"data-iso-key":"_0"})
+        if jsonEl==None:
+            logging.debug("Could not find JSON data tag")
         else:
-            pdfUrl = pdfEl["href"]
-            if pdfUrl.startswith("//"):
-                pdfUrl = "http:"+pdfUrl
-            logging.debug("Elsevier PDF URL seems to be %s" % pdfUrl)
-            pdfUrl = urlparse.urljoin(htmlPage["url"], url)
+            jsonContent = json.loads(jsonEl.renderContents())
+            pdfUrl = jsonContent["article"]["pdfDownload"]["linkToPdf"]
+            pdfUrl = urlparse.urljoin(htmlPage["url"], pdfUrl)
             pdfPage = httpGetDelay(pdfUrl, delayTime, userAgent=agent, referer=htmlPage["url"])
+            if pdfPage['mimeType'] == "text/html":
+                oldPdfUrl = pdfUrl
+                logging.debug("Got html instead of pdf, checking for redirect")
+                redirPage = BeautifulSoup(pdfPage["data"])
+                redirMessage = redirPage.find("div", attrs={"id":"redirect-message"})
+                if redirMessage==None:
+                    logging.debug("Could not find redirect message")
+                else:
+                    redirLink = redirMessage.find("a")
+                    if redirLink==None:
+                        logging.debug("Could not find redirect link")
+                    else:
+                        pdfUrl = redirLink["href"]
+                        pdfPage = httpGetDelay(pdfUrl, delayTime, userAgent=agent, referer=oldPdfUrl)
             paperData["main.pdf"] = pdfPage
-            # the PDF link becomes invalid after 10 minutes, so direct users
-            # to html instead when they select a PDF
-            paperData["main.pdf"]["url"] = htmlPage["url"]
-        
+            logging.debug(pdfUrl)
+
         # supp files
         suppEls = bs.findAll("a", attrs={'class':'MMCvLINK'})
         if len(suppEls)!=0:
@@ -3285,6 +3294,8 @@ def crawlOneDoc(artMeta, srcDir, forceCrawlers=None):
 
         except pubGetError as ex:
             lastException = ex
+            if ex.logMsg == "invalidPdf":
+                paperData = None
 
         if paperData is None:
             if lastException is not None:
