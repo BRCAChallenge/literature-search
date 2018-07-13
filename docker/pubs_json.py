@@ -154,9 +154,10 @@ def main(args):
 
     for variant in variantD:
         for pub in variantD[variant]:
-            mentions = variantD[variant][pub]
-            variantD[variant][pub] = pubsD[pub]
-            variantD[variant][pub]["mentions"] = mentions
+            if pub in pubsD:
+                mentions = variantD[variant][pub]
+                variantD[variant][pub] = pubsD[pub]
+                variantD[variant][pub]["mentions"] = mentions
 
     output = json.dumps(variantD)
 
