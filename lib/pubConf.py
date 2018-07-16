@@ -1,14 +1,18 @@
 from os.path import expanduser, join, isdir, isfile, normpath, dirname, abspath
-from os import makedirs
+from os import makedirs, getenv
 import logging
 from maxCommon import getAppDir
 
-# first parse the user config file
-confName = expanduser("~/.pubConf")
+# first parse the user config file. The variables will later be re-applied
+# after the setting in this file
+confName = getenv("PUBMUNCH_CONF")
+if (confName is not None) and not isfile(confName):
+    raise Exception("configuration file specified in PUBMUNCH_CONF environment variable ({}) does not exist".format(confName))
+if confName is None:
+    confName = expanduser("~/.pubConf")
 newVars = {}
 if isfile(confName):
-    dummy = {}
-    execfile(confName, dummy, newVars)
+    execfile(confName, {}, newVars)
     for key, value in newVars.iteritems():
         locals()[key] = value
 
@@ -62,7 +66,7 @@ inventoryDir = join(pubsDataDir, "inventory")
 dbRefDir = '/hive/data/inside/pubs/parsedDbs'
 
 # directories with a local copy of PDB and uniprot, ncbi genes, refseq
-uniProtBaseDir = '/hive/data/outside/uniProtCurrent'
+uniProtBaseDir = '/hive/data/outside/uniGene/current'
 pdbBaseDir = '/hive/data/outside/pdb'
 ncbiGenesDir = '/hive/data/outside/ncbi/genes/'
 #ncbiRefseqDir = '/hive/data/outside/ncbi/refseq/release/vertebrate_mammalian'
@@ -668,6 +672,11 @@ def getStaticDataDir():
     """ returns the data dir that is part of the code repo with all static data, e.g. train pmids
     """
     return staticDataDir
+
+def getStaticFile(subDir, fname):
+    """ returns the data dir that is part of the code repo with all static data, e.g. train pmids
+    """
+    return join(staticDataDir, subDir, fname)
 
 def defaultInOutDirs(datasetName):
     " return the default input and the default output directory for a dataset "
