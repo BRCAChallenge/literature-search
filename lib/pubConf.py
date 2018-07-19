@@ -264,8 +264,8 @@ CONVERTERS = {
     "xls":"xls2csv $in > $out",
     "xlsx":"ssconvert $in $out",
     "ppt":"catppt $in > $out",
-    "htm":"html2text $in  --unicode-snob --images-to-alt --ignore-links --ignore-emphasis > $out",
-    "html":"html2text $in  --unicode-snob --images-to-alt --ignore-links --ignore-emphasis > $out",
+    "htm":"iconv -f `file -b --mime-encoding $in` -t utf8 $in | html2text --unicode-snob --images-to-alt --ignore-links --ignore-emphasis > $out",
+    "html":"iconv -f `file -b --mime-encoding $in` -t utf8 $in | html2text --unicode-snob --images-to-alt --ignore-links --ignore-emphasis > $out",
     #"htm":"html2text -style pretty -nobs $in | tr -s ' ' > $out",
     # 'pretty' avoids **** markup for <h3> section names
     #"html":"html2text -style pretty -nobs $in | tr -s ' ' > $out",
