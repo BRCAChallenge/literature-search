@@ -111,22 +111,18 @@ def ncbi_url(pmid):
 
 def build_pubs_dictionary(filename):
 
-    pubs = open(filename)
-    header = pubs.readline()
+    with open(filename) as pubs:
+        reader = csv.DictReader(pubs, delimiter="\t")
 
-    pubsD = {}
+        pubsD = {}
 
-    for line in pubs:
-        line = line.strip().split('\t')    
-        pmid = line[21]
-        pubsD[pmid] = {"journal": line[5],
-                       "year": line[9],
-                       "authors": line[12],
-                       "keywords": line[15],
-                       "title": line[16],
-                       "abstract": line[17],
-                       "url": line[24] if line[24] != "" else ncbi_url(pmid)}
-        
+        for row in reader:
+            for key, val in row.iteritems():
+                print key
+            pmid = row["pmid"]
+            pubsD[pmid] = { key: row[key] for key in ['journal', 'year', 'authors', 'keywords', 'title', 'abstract'] }
+            pubsD[pmid]['url'] = row['fulltextUrl'] if row['fulltextUrl'] != "" else ncbi_url(pmid)
+
     return pubsD        
 
 def main(args):
