@@ -4,6 +4,8 @@ set -e
 
 workdir=/tmp
 optdir=/opt
+#workdir=/home/joe/pmwork-merged
+#optdir=/home/joe/pubMunch-BRCA/docker
 numPMIDs=9999999
 synapseDir=syn8506589
 synapseOutDir=$synapseDir
@@ -41,8 +43,9 @@ if [ -n $synapseUsername ] && [ -n $synapsePassword ]
    loggedIn=true
 fi
 
-mkdir $workdir/pubMunch/data
+#mkdir $workdir/pubMunch/data
 synapse get -r $synapseDataDir --downloadLocation $workdir/pubMunch/data
+#cp -r /home/joe/pmdata $workdir/pubMunch/data
 
 mkdir $workdir/Crawl $workdir/CrawlText
 

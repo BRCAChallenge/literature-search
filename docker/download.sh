@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 
-TMPDIR=/home/joe/pmwork
+TMPDIR=/tmp
+#TMPDIR=/home/joe/pmwork-merged
 #PDFBOX="https://repo1.maven.org/maven2/org/apache/pdfbox/pdfbox-app/2.0.5/pdfbox-app-2.0.5.jar"
 
-#git clone https://github.com/BRCAChallenge/pubMunch-BRCA.git $TMPDIR/pubMunch
-cp -R /home/joe/pubMunch-BRCA $TMPDIR/pubMunch
+git clone https://github.com/BRCAChallenge/pubMunch-BRCA.git $TMPDIR/pubMunch
+#cp -R /home/joe/pubMunch-BRCA $TMPDIR/pubMunch
 
 mkdir $TMPDIR/pubMunch/external
 mirror=$(python -c "from urllib2 import urlopen; import json; print json.load( urlopen('http://www.apache.org/dyn/closer.lua?path=$path&asjson=1'))['preferred']")
