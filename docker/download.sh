@@ -4,7 +4,8 @@ TMPDIR=/tmp
 #TMPDIR=/home/joe/pmwork-merged
 #PDFBOX="https://repo1.maven.org/maven2/org/apache/pdfbox/pdfbox-app/2.0.5/pdfbox-app-2.0.5.jar"
 
-git clone https://github.com/BRCAChallenge/pubMunch-BRCA.git $TMPDIR/pubMunch
+#git clone https://github.com/BRCAChallenge/pubMunch-BRCA.git $TMPDIR/pubMunch
+git clone https://github.com/strbean/pubMunch-BRCA.git $TMPDIR/pubMunch
 #cp -R /home/joe/pubMunch-BRCA $TMPDIR/pubMunch
 
 mkdir $TMPDIR/pubMunch/external
