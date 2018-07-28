@@ -1,4 +1,4 @@
-FROM ubuntu
+FROM ubuntu:16.04
 
 MAINTAINER Audrey Musselman-Brown, almussel@ucsc.edu
 
@@ -11,6 +11,9 @@ ADD wrapper.sh /opt/wrapper.sh
 ADD download.sh /opt/download.sh
 ADD pubs_json.py /opt/pubs_json.py
 ADD getpubs.py /opt/getpubs.py
+# prevent keyring from prompting for password
+# maybe this should be $HOME/.local...
+ADD keyringrc.cfg /root/.local/share/python_keyring/keyringrc.cfg
 RUN chmod +x /opt/*
 
 RUN mkdir /opt/bin
