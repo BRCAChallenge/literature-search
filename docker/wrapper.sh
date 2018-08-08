@@ -4,7 +4,7 @@ set -e
 
 workdir=/tmp
 optdir=/opt
-#workdir=/home/joe/pmwork-merged
+#workdir=/home/joe/pmwork-newoutput
 #optdir=/home/joe/pubMunch-BRCA/docker
 numPMIDs=9999999
 synapseDir=syn8506589
@@ -31,6 +31,12 @@ if $test
     synapseOutDir=syn9620237
     pmidFile=syn8532670
     mutationFile=syn8532671
+fi
+
+if [ -d /dockerOutput ]
+    then
+        echo Touching /dockerOutput/test
+        touch /dockerOutput/test
 fi
 
 $optdir/download.sh
@@ -94,6 +100,7 @@ if $loggedIn
   then
     # Update version number. This is necessary due to a Synapse upload issue
     oldVersion=`head -1 $workdir/foundMutations.tsv | awk -F '\t' '{print $NF}'`
+    echo Old Version = $oldVersion
     newVersion=$(expr $oldVersion + 1)
     sed -i "1s/$oldVersion/$newVersion/g" $workdir/foundMutations.tsv
     synapse add $workdir/foundMutations.tsv --parentId=$synapseOutDir
@@ -107,7 +114,7 @@ if $test
 fi
 
 gunzip $workdir/CrawlText/0_00000.articles.gz
-python $optdir/pubs_json.py $workdir/all_mutations.tsv $workdir/CrawlText/0_00000.articles $workdir/BRCApublications.json
+python $optdir/pubs_json.py $workdir/all_mutations.tsv $workdir/CrawlText/0_00000.articles $workdir/newPubs.json $workdir/variantPubs.json
 
 echo "Uploading mutations and pmids"
 # Upload  output json file
@@ -118,3 +125,9 @@ else
     cat BRCApublications.json
 fi
 echo "Success!"
+
+if [ -d /dockerOutput ]
+    then
+        cp -r $workdir /dockerOutput/
+fi
+
