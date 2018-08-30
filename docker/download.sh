@@ -13,3 +13,5 @@ wget -O $TMPDIR/pubMunch/external/pdfbox-app-2.0.11.jar ${mirror}pdfbox/2.0.11/p
 wget -O $TMPDIR/pubMunch/external/docx2txt-1.4.tgz https://sourceforge.net/projects/docx2txt/files/latest/download
 tar -C $TMPDIR/pubMunch/external -xzf $TMPDIR/pubMunch/external/docx2txt-1.4.tgz
 
+mkdir $TMPDIR/brca_release
+wget http://brcaexchange.org/backend/downloads/releases/current_release.tar.gz -O - | tar -C $TMPDIR/brca_release -xz 
