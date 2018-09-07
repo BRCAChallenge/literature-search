@@ -7,6 +7,10 @@ RUN pip install numpy
 RUN pip install biopython pygr requests selenium==3.3.0 pyvirtualdisplay html2text synapseclient
 RUN pip install ga4gh==0.3.5 || true
 
+RUN git clone https://github.com/counsyl/hgvs.git
+# taking pyhgvs 0.9.4
+RUN cd hgvs && git checkout aebe5bd9683f4b5937fd653ce4b13fcd4f3ebb10 && python setup.py install
+
 ADD wrapper.sh /opt/wrapper.sh
 ADD download.sh /opt/download.sh
 ADD pubs_json.py /opt/pubs_json.py
