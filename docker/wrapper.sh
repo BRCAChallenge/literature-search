@@ -12,6 +12,7 @@ synapseOutDir=$synapseDir
 synapseDataDir=syn8520180
 pmidFile=syn8683574
 mutationFile=syn8683582
+articleFile=syn11257493
 test=false
 
 while getopts u:p:t option
@@ -90,40 +91,41 @@ synapse get $mutationFile --downloadLocation $workdir
 #touch $workdir/foundMutations.tsv
 #echo "this is a header line\n" > $workdir/foundMutations.tsv
 
-cat $workdir/foundMutations.tsv  <(tail -n +2 $workdir/mutations.tsv) > $workdir/all_mutations.tsv
-(head -n 1 $workdir/all_mutations.tsv && tail -n +2 $workdir/all_mutations.tsv | sort) > $workdir/foundMutations.tsv
+#cat $workdir/foundMutations.tsv  <(tail -n +2 $workdir/mutations.tsv) > $workdir/all_mutations.tsv
+#(head -n 1 $workdir/all_mutations.tsv && tail -n +2 $workdir/all_mutations.tsv | sort) > $workdir/foundMutations.tsv
 
 echo "Uploading PubMunch results"
 cp $workdir/allPmids.txt $workdir/crawledPmids.txt
 
-if $loggedIn
-  then
-    # Update version number. This is necessary due to a Synapse upload issue
-    oldVersion=`head -1 $workdir/foundMutations.tsv | awk -F '\t' '{print $NF}'`
-    echo Old Version = $oldVersion
-    newVersion=$(expr $oldVersion + 1)
-    sed -i "1s/$oldVersion/$newVersion/g" $workdir/foundMutations.tsv
-    synapse add $workdir/foundMutations.tsv --parentId=$synapseOutDir
-    synapse add $workdir/crawledPmids.txt --parentId=$synapseOutDir
-fi
+#if $loggedIn
+#  then
+#    # Update version number. This is necessary due to a Synapse upload issue
+#    oldVersion=`head -1 $workdir/foundMutations.tsv | awk -F '\t' '{print $NF}'`
+#    echo Old Version = $oldVersion
+#    newVersion=$(expr $oldVersion + 1)
+#    sed -i "1s/$oldVersion/$newVersion/g" $workdir/foundMutations.tsv
+#    synapse add $workdir/foundMutations.tsv --parentId=$synapseOutDir
+#    synapse add $workdir/crawledPmids.txt --parentId=$synapseOutDir
+#fi
 
 echo "Matching mutations to BRCA variants"
-if $test
-  then
-    synapse get syn8532322 --downloadLocation $workdir
-fi
+#if $test
+#  then
+#    synapse get syn8532322 --downloadLocation $workdir
+#fi
 
-gunzip $workdir/CrawlText/0_00000.articles.gz
-python $optdir/pubs_json.py $workdir/all_mutations.tsv $workdir/CrawlText/0_00000.articles $workdir/newPubs.json $workdir/variantPubs.json
+#python $optdir/pubs_json.py $workdir/all_mutations.tsv $workdir/CrawlText/0_00000.articles $workdir/newPubs.json $workdir/variantPubs.json
 
-echo "Uploading mutations and pmids"
+python $optdir/correlate.py $workdir/CrawlText/articles.db $workdir/brca_release/output/release/built_with_change_types.tsv $workdir/mutations.tsv $workdir/litResults.json
+
+#echo "Uploading mutations and pmids"
 # Upload  output json file
-if $loggedIn
-  then
-    synapse add $workdir/BRCApublications.json --parentId=$synapseOutDir
-else
-    cat BRCApublications.json
-fi
+#if $loggedIn
+#  then
+#    synapse add $workdir/BRCApublications.json --parentId=$synapseOutDir
+#else
+#    cat BRCApublications.json
+#fi
 echo "Success!"
 
 if [ -d /dockerOutput ]

@@ -13,7 +13,7 @@ RUN cd hgvs && git checkout aebe5bd9683f4b5937fd653ce4b13fcd4f3ebb10 && python s
 
 ADD wrapper.sh /opt/wrapper.sh
 ADD download.sh /opt/download.sh
-ADD pubs_json.py /opt/pubs_json.py
+ADD correlate.py /opt/correlate.py
 ADD getpubs.py /opt/getpubs.py
 # prevent keyring from prompting for password
 # maybe this should be $HOME/.local...

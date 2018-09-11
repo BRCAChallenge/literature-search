@@ -1,14 +1,23 @@
 import sys
 import csv
 import json
+import sqlite3
+
+def dict_factory(cursor, row):
+    d = {}
+    for idx, col in enumerate(cursor.description):
+        d[col[0]] = row[idx]
+    return d
 
 def get_articles(article_file):
     ''' get article metadata, return a dict using article PMID as key '''
     articles = {}
-    with open(article_file) as artfile:
-        for article in csv.DictReader(artfile, delimiter="\t"):
-            pmid = article["pmid"]
-            articles[pmid] = article
+    conn = sqlite3.connect(article_file)
+    conn.row_factory = dict_factory
+    curs = conn.cursor()
+    for article in curs.execute("SELECT * FROM articles"):
+        pmid = article["pmid"]
+        articles[pmid] = article
     return articles
 
 def get_known_variants(release_file):
@@ -75,7 +84,7 @@ def filter_articles(articles, matches):
 
 def main(args):
     if len(args) != 4:
-        sys.exit("usage: python correlate.py [articlefile] [brca release file] [found mutations file] [output]")
+        sys.exit("usage: python correlate.py [article db] [brca release file] [found mutations file] [output]")
     article_file, release_file, found_file, output_file =  args
     stats = {}
     print "Building articles dictionary"

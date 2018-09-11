@@ -53,7 +53,7 @@ articleFields=[
 "keywords", # medline: mesh terms or similar, separated by / (medline is using , internally)
 "title",    # title of article
 "abstract", # abstract if available
-"lang",     # article language
+#"lang",     # article language
 "vol",      # volume
 "issue",    # issue
 "page",            # first page of article, can be ix, x, or S4
@@ -1155,6 +1155,7 @@ def addToDatabase(con, cur, tsvFnames):
         rowCount += len(newRows)
 
         logging.log(5, "Running Sql %s against %d rows" % (sql, len(newRows)))
+        print newRows[0]
         cur.executemany(sql, newRows)
         con.commit()
         tp.taskCompleted()
