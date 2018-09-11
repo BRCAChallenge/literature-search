@@ -50,9 +50,14 @@ if [ -n $synapseUsername ] && [ -n $synapsePassword ]
    loggedIn=true
 fi
 
-#mkdir $workdir/pubMunch/data
-synapse get -r $synapseDataDir --downloadLocation $workdir/pubMunch/data
-#cp -r /home/joe/pmdata $workdir/pubMunch/data
+if [ -d /data ]
+    then
+        echo Copying data
+        cp -R /data $workdir/pubMunch/data
+    else
+        echo Downloading data
+        $optdir/download_data.sh -u $synapseUsername -p $synapsePassword $workdir/pubMunch/data
+fi
 
 mkdir $workdir/Crawl $workdir/CrawlText
 
