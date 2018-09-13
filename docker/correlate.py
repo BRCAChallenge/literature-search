@@ -17,7 +17,7 @@ def get_articles(article_file):
     curs = conn.cursor()
     for article in curs.execute("SELECT * FROM articles"):
         pmid = article["pmid"]
-        articles[pmid] = article
+        articles[str(pmid)] = article
     return articles
 
 def get_known_variants(release_file):
