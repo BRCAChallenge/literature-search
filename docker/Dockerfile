@@ -17,7 +17,8 @@ ADD download_data.sh /opt/download_data.sh
 ADD correlate.py /opt/correlate.py
 ADD getpubs.py /opt/getpubs.py
 ADD brca_tests /opt/brca_tests
-Add test_pipeline.py /opt/test_pipeline.py
+ADD test_pipeline.py /opt/test_pipeline.py
+ADD test_correlate.py /opt/test_correlate.py
 
 # prevent keyring from prompting for password
 # maybe this should be $HOME/.local...

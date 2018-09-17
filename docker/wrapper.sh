@@ -37,6 +37,12 @@ then
     cmd=$1
 fi
 
+if [ $cmd = unittest ]
+then
+    TESTDIR=$optdir/brca_tests python $optdir/test_correlate.py
+    exit
+fi
+
 if $test
   then
     numPMIDs=25

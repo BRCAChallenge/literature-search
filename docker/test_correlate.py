@@ -1,6 +1,8 @@
+import os
 import unittest
 import correlate
 
+testdir = os.environ.get("TESTDIR")
 
 expected_articles = {
     '30186769': {
@@ -75,20 +77,20 @@ expected_correlation_stats = {'duplicates': 3, 'notconfirmed': 93, 'novarid': 6,
 # get_articles(article_file)
 class test_get_articles(unittest.TestCase):
     def test_get_articles(self):
-        article_dict = correlate.get_articles("brca_tests/articles.db")
+        article_dict = correlate.get_articles(testdir + "/articles.db")
         self.assertEqual(expected_articles, article_dict)
 
 
 # get_known_variants(release_file)
 class test_get_known_variants(unittest.TestCase):
     def test_get_known_variants(self):
-        variant_dict = correlate.get_known_variants("brca_tests/built_with_change_types.tsv")
+        variant_dict = correlate.get_known_variants(testdir + "/built_with_change_types.tsv")
         self.assertEqual(expected_variant_dict, variant_dict)
 
 # correlate_found_variants(found_file, built_pyhgvs)
 class test_correlate_found_variants(unittest.TestCase):
     def test_correlate_found_variants(self):
-        matches, correlation_stats = correlate.correlate_found_variants("brca_tests/foundMutations.tsv", expected_variant_dict)
+        matches, correlation_stats = correlate.correlate_found_variants(testdir + "/foundMutations.tsv", expected_variant_dict)
         self.assertEqual(expected_matches, matches)
         self.assertEqual(expected_correlation_stats, correlation_stats)
 
