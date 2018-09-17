@@ -14,6 +14,7 @@ pmidFile=syn8683574
 mutationFile=syn8683582
 articleFile=syn11257493
 test=false
+cmd=munch
 
 while getopts u:p:t option
 do
@@ -24,6 +25,17 @@ do
                 t) test=true;;
         esac
 done
+
+shift $((OPTIND -1))
+
+# commands:
+#   munch - run the full pipeline
+#   test - perform test run of full pipeline over a small list of papers
+
+if [[ -n $1 ]]
+then
+    cmd=$1
+fi
 
 if $test
   then
@@ -64,20 +76,25 @@ mkdir $workdir/Crawl $workdir/CrawlText
 # Pubmed API url: Retrieve all articles that mention "brca" in the title or abstract
 pubmedURL="https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&tool=retrPubmed&email=maximilianh@gmail.com&term=brca%2A[Title/Abstract]&retstart=0&retmax="$numPMIDs
 
-# Retrieve list of papers from PubMed
-wget -O $workdir/pubmedResponse.xml $pubmedURL
+if [ $cmd = "test" ]
+then
+    cp $optdir/brca_tests/pmids.txt $workdir/Crawl/pmids.txt
+else
+    # Retrieve list of papers from PubMed
+    wget -O $workdir/pubmedResponse.xml $pubmedURL
 
-# Extract PMIDs from xml response
-python $optdir/getpubs.py $workdir/pubmedResponse.xml > $workdir/allPmids.txt
+    # Extract PMIDs from xml response
+    python $optdir/getpubs.py $workdir/pubmedResponse.xml > $workdir/allPmids.txt
 
-# Download list of previously crawled PMIDs from synapse
-synapse get $pmidFile --downloadLocation $workdir
-#touch $workdir/crawledPmids.txt
+    # Download list of previously crawled PMIDs from synapse
+    synapse get $pmidFile --downloadLocation $workdir
+    #touch $workdir/crawledPmids.txt
 
-# Determine which PMIDs are new since the last run
-sort -i $workdir/allPmids.txt
-sort -i $workdir/crawledPmids.txt
-grep -F -x -v -f $workdir/crawledPmids.txt $workdir/allPmids.txt > $workdir/Crawl/pmids.txt
+    # Determine which PMIDs are new since the last run
+    sort -i $workdir/allPmids.txt
+    sort -i $workdir/crawledPmids.txt
+    grep -F -x -v -f $workdir/crawledPmids.txt $workdir/allPmids.txt > $workdir/Crawl/pmids.txt
+fi
 
 if [[ $(wc -l $workdir/Crawl/pmids.txt | awk '{print $1}') -ge 1 ]]
   then 
@@ -99,8 +116,11 @@ synapse get $mutationFile --downloadLocation $workdir
 #cat $workdir/foundMutations.tsv  <(tail -n +2 $workdir/mutations.tsv) > $workdir/all_mutations.tsv
 #(head -n 1 $workdir/all_mutations.tsv && tail -n +2 $workdir/all_mutations.tsv | sort) > $workdir/foundMutations.tsv
 
-echo "Uploading PubMunch results"
-cp $workdir/allPmids.txt $workdir/crawledPmids.txt
+if [ $cmd != "test" ]
+then
+    echo "Uploading PubMunch results"
+    cp $workdir/allPmids.txt $workdir/crawledPmids.txt
+fi
 
 #if $loggedIn
 #  then
@@ -133,8 +153,14 @@ python $optdir/correlate.py $workdir/CrawlText/articles.db $workdir/brca_release
 #fi
 echo "Success!"
 
+if [ $cmd = "test" ]
+then
+    python $optdir/test_pipeline.py $workdir/litResults.json $optdir/brca_tests/expected.json
+fi
+
 if [ -d /dockerOutput ]
     then
+        echo "Copying output"
         cp -r $workdir /dockerOutput/
 fi
 
