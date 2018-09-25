@@ -3,6 +3,8 @@ import logging, gdbm, marshal, zlib, copy, struct, random, sqlite3, types
 from collections import defaultdict, namedtuple
 from os.path import join
 
+import pyhgvs
+
 logger = None
 
 # re2 is often faster than re
@@ -402,8 +404,30 @@ class VariantDescription(object):
         elif self.mutType == "dbSnp":
             name = self.origSeq
         else:
-            name = makeHgvsStr(self.seqType, self.seqId, self.origSeq, self.start, self.mutSeq, self.offset)
+            #name = makeHgvsStr(self.seqType, self.seqId, self.origSeq, self.start, self.mutSeq, self.offset)
+            name = self.pyhgvsName()
         return name
+
+    def pyhgvsName(self):
+        if self.seqType == "prot":
+            return makeHgvsStr(self.seqType, self.seqId, self.origSeq, self.start, self.mutSeq, self.offset)
+            #return pyhgvs.HGVSName(kind="p", mutation_type=self.mutType, transcript=self.seqId, start=self.start, \
+            #        end=self.end, ref_allele=self.origSeq, ref2_allele=self.origSeq, alt_allele=self.mutSeq).format(use_gene=False)
+
+        elif self.seqType in ["dna", "cds", "rna"]:
+            start = pyhgvs.CDNACoord(coord=self.start, offset=self.offset)
+            end = pyhgvs.CDNACoord(coord=self.end)
+            if self.mutType == "sub":
+                mutType = ">"
+            else:
+                mutType = self.mutType
+            if self.mutType in ["del", "dup", "sub"]: # check if this applies to "ins" too
+                end.coord -= 1  # del and dup exclusive end positions to inclusive
+
+            return pyhgvs.HGVSName(kind="c", mutation_type=mutType, transcript=self.seqId, \
+                    cdna_start=start, cdna_end=end, ref_allele=self.origSeq, alt_allele=self.mutSeq).format(use_gene=False)
+        else:
+            raise NotImplementedError("unknown seqType: %s" % self.seqType)
 
     def asRow(self):
         row = []
@@ -1388,7 +1412,7 @@ def groundVariant(docId, text, variant, mentions, snpMentions, entrezGenes, inse
             mappedRsIds.extend(mentionedDbSnpVars.keys())
 
             groundedVar = SeqVariantData(varId, protVars, codVars, rnaVars, comment, beds, \
-                entrezGene, geneSym, varRsIds, mentionedDbSnpVars, mentions, text, seqType=variant.seqType)
+                entrezGene, geneSym, varRsIds, mentionedDbSnpVars, mentions, text, seqType=variant.seqType, patType=variant.mutType)
 
             # isInDb = dbAnnots.addCheckVariant(groundedVar)
             groundedMuts.append(groundedVar)
@@ -1413,9 +1437,11 @@ def groundVariant(docId, text, variant, mentions, snpMentions, entrezGenes, inse
         if len(entrezGenes) > 0:
             gene = findClosestGeneMention(mentions, entrezGenes)
             geneSym = geneData.entrezToSym(gene)
-            ungroundVar = SeqVariantData(seqType=variant.seqType, codVars=[variant], mentions=mentions, text=text, entrezGene=gene, geneSym=geneSym)
+            ungroundVar = SeqVariantData(patType=variant.mutType, seqType=variant.seqType, codVars=[variant], \
+                    mentions=mentions, text=text, entrezGene=gene, geneSym=geneSym)
         else: 
-            ungroundVar = SeqVariantData(seqType=variant.seqType, codVars=[variant], mentions=mentions, text=text)
+            ungroundVar = SeqVariantData(patType=variant.mutType, seqType=variant.seqType, codVars=[variant], \
+                    mentions=mentions, text=text)
 
     unmappedRsVars = unmappedRsVarsToFakeVariants(snpMentions, mappedRsIds, text)
     # ungroundVarData.extend(unmappedRsVars)

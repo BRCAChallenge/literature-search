@@ -1,14 +1,18 @@
 from os.path import expanduser, join, isdir, isfile, normpath, dirname, abspath
-from os import makedirs
+from os import makedirs, getenv
 import logging
 from maxCommon import getAppDir
 
-# first parse the user config file
-confName = expanduser("~/.pubConf")
+# first parse the user config file. The variables will later be re-applied
+# after the setting in this file
+confName = getenv("PUBMUNCH_CONF")
+if (confName is not None) and not isfile(confName):
+    raise Exception("configuration file specified in PUBMUNCH_CONF environment variable ({}) does not exist".format(confName))
+if confName is None:
+    confName = expanduser("~/.pubConf")
 newVars = {}
 if isfile(confName):
-    dummy = {}
-    execfile(confName, dummy, newVars)
+    execfile(confName, {}, newVars)
     for key, value in newVars.iteritems():
         locals()[key] = value
 
@@ -62,7 +66,7 @@ inventoryDir = join(pubsDataDir, "inventory")
 dbRefDir = '/hive/data/inside/pubs/parsedDbs'
 
 # directories with a local copy of PDB and uniprot, ncbi genes, refseq
-uniProtBaseDir = '/hive/data/outside/uniProtCurrent'
+uniProtBaseDir = '/hive/data/outside/uniGene/current'
 pdbBaseDir = '/hive/data/outside/pdb'
 ncbiGenesDir = '/hive/data/outside/ncbi/genes/'
 #ncbiRefseqDir = '/hive/data/outside/ncbi/refseq/release/vertebrate_mammalian'
@@ -256,12 +260,12 @@ extToolDir = _sourceDir+"/external"
 # you can define variables and use them, see extToolDir
 CONVERTERS = {
     "doc":"catdoc $in > $out",
-    "docx":"%(extToolDir)s/docx2txt-1.2/docx2txt.pl < $in > $out",
+    "docx":"%(extToolDir)s/docx2txt-1.4/docx2txt.pl < $in > $out",
     "xls":"xls2csv $in > $out",
     "xlsx":"ssconvert $in $out",
     "ppt":"catppt $in > $out",
-    "htm":"html2text $in  --unicode-snob --images-to-alt --ignore-links --ignore-emphasis > $out",
-    "html":"html2text $in  --unicode-snob --images-to-alt --ignore-links --ignore-emphasis > $out",
+    "htm":"iconv -f `file -b --mime-encoding $in` -t utf8 $in | html2text --unicode-snob --images-to-alt --ignore-links --ignore-emphasis > $out",
+    "html":"iconv -f `file -b --mime-encoding $in` -t utf8 $in | html2text --unicode-snob --images-to-alt --ignore-links --ignore-emphasis > $out",
     #"htm":"html2text -style pretty -nobs $in | tr -s ' ' > $out",
     # 'pretty' avoids **** markup for <h3> section names
     #"html":"html2text -style pretty -nobs $in | tr -s ' ' > $out",
@@ -273,7 +277,7 @@ CONVERTERS = {
     "xml":"XMLTEXT",
     "nxml":"NXMLTEXT",
     "pdf":"pdftotext -q -nopgbrk -enc UTF-8 -eol unix $in $out",
-    "pdf2":"java -Xmx512m -jar %(extToolDir)s/pdfbox-app-2.0.5.jar ExtractText $in $out -encoding utf8"
+    "pdf2":"java -Xmx512m -jar %(extToolDir)s/pdfbox-app-2.0.11.jar ExtractText $in $out -encoding utf8"
 }
 
 # sometimes (e.g. if downloaded from the web) we don't have a file extension, but only 
@@ -668,6 +672,11 @@ def getStaticDataDir():
     """ returns the data dir that is part of the code repo with all static data, e.g. train pmids
     """
     return staticDataDir
+
+def getStaticFile(subDir, fname):
+    """ returns the data dir that is part of the code repo with all static data, e.g. train pmids
+    """
+    return join(staticDataDir, subDir, fname)
 
 def defaultInOutDirs(datasetName):
     " return the default input and the default output directory for a dataset "

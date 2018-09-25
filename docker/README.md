@@ -37,3 +37,42 @@ to the BRCA Exchange Literature Searching folder (https://www.synapse.org/#!Syna
 Without these credentials, the pipeline must be run with .
 
 To run the pipeline on a small sample of 25 pmids, use the `-t` option. The output of test runs will be uploaded to the test/output folder on Synapse.
+
+## Tests
+
+The following test scripts exist:
+
+- `test-pipeline.py`
+  - performs a full run of the pipeline using pmids listed in `brca_tests/pmids.txt` and compares the resulting output with `brca_tests/expected.json`.
+
+- `test-correlate.py`
+  - unit tests for correlate.py
+
+- `test-crawl.py`
+  - crawls a sample of papers representing major publishers and compares checksums of the resulting papers with expected values
+
+- `test-findmutations.py`
+  - passes snippets of text to pubFindMutations and ensures it finds the correct mutations. Stubs are present for different matching patterns
+
+## Volume Names
+
+- `/dockerOutput`
+  - All working data and final results will be copied to this volume on successful completion
+
+- `/data`
+  - This directory will be used as a source of reference data, rather than downloading it. See [Downloading Data](#downloading-data)
+
+- `/root/.pubConf`
+  - This file will, if present, is used for pubMunch configuration. [See Example](#pubconf-example)
+
+## Downloading Data
+
+Reference data can be downloaded to your local machine using `download_data.sh -u <synapseUsername> -p <synapsePassword> <destination directory>`
+
+## ~/.pubConf Example
+
+```
+httpProxy="http://sampleuser:samplepass@hgroaming.cse.ucsc.edu:7267"
+httpsProxy="http://sampleuser:samplepass@hgroaming.cse.ucsc.edu:7267"
+elsevierApiKey="samplekey"
+```

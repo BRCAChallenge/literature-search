@@ -5,6 +5,7 @@ import sys
 import json
 import re
 import os
+import csv
 from ga4gh.client import client
 
 BRCA_GA4GH_URL = "http://brcaexchange.org/backend/data/ga4gh/v0.6.0a7/" # URL for BRCA Exchange GA4GH instance
@@ -111,29 +112,27 @@ def ncbi_url(pmid):
 
 def build_pubs_dictionary(filename):
 
-    pubs = open(filename)
-    header = pubs.readline()
+    with open(filename) as pubs:
+        reader = csv.DictReader(pubs, delimiter="\t")
 
-    pubsD = {}
+        pubsD = {}
 
-    for line in pubs:
-        line = line.strip().split('\t')    
-        pmid = line[21]
-        pubsD[pmid] = {"journal": line[5],
-                       "year": line[9],
-                       "authors": line[12],
-                       "keywords": line[15],
-                       "title": line[16],
-                       "abstract": line[17],
-                       "url": line[24] if line[24] != "" else ncbi_url(pmid)}
-        
+        for row in reader:
+            for key, val in row.iteritems():
+                print key
+            pmid = row["pmid"]
+            pubsD[pmid] = { key: row[key] for key in ['journal', 'year', 'authors', 'keywords', 'title', 'abstract'] }
+            pubsD[pmid]['url'] = row['fulltextUrl'] if row['fulltextUrl'] != "" else ncbi_url(pmid)
+
     return pubsD        
 
 def main(args):
     
     variantFile = args[0]
     pubsFile = args[1]
-    outFile = args[2]
+    #outFile = args[2]
+    newPubsFile = args[2]
+    variantPubsFile = args[3]
     brcaFile = "/tmp/brcavars.json"
 
     brca1 = Gene(BRCA1_NAME, BRCA1_CHR, BRCA1_START, BRCA1_END)
@@ -152,16 +151,30 @@ def main(args):
 
     pubsD = build_pubs_dictionary(pubsFile)
 
+    newPubs = {}
+    variantPubs = {}
     for variant in variantD:
         for pub in variantD[variant]:
+            if not variant in variantPubs:
+                variantPubs[variant] = {}
             mentions = variantD[variant][pub]
-            variantD[variant][pub] = pubsD[pub]
-            variantD[variant][pub]["mentions"] = mentions
+            variantPubs[variant][pub] = mentions
+            if pub in pubsD:
+                newPubs[pub] = pubsD[pub]
+                #mentions = variantD[variant][pub]
+                #variantD[variant][pub] = pubsD[pub]
+                #variantD[variant][pub]["mentions"] = mentions
 
-    output = json.dumps(variantD)
+    #output = json.dumps(variantD)
 
-    out = open(outFile, 'w')
-    out.write(output)
+    #out = open(outFile, 'w')
+    #out.write(output)
+
+    with open(newPubsFile, 'w') as out:
+        out.write(json.dumps(newPubs))
+
+    with open(variantPubsFile, 'w') as out:
+        out.write(json.dumps(variantPubs))
 
 if __name__=="__main__":
     sys.exit(main(sys.argv[1:]))
