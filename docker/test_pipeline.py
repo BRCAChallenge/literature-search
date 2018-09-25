@@ -1,6 +1,8 @@
 import sys
 import json
 
+paper_ignore_keys = ["time"]
+
 def diff_counts(results, expected):
     errs = []
     res_vc = results["variantCount"]
@@ -42,7 +44,7 @@ def diff_papers(results, expected):
                 errs.append("Missing expected fields in paper with PMID{}: {}".format(pmid, list(expected_paper_set - results_paper_set)))
 
             for key, value in results_paper.iteritems():
-                if key in expected_paper and value != expected_paper[key]:
+                if key not in paper_ignore_keys and key in expected_paper and value != expected_paper[key]:
                     errs.append("Found unexpected value for field '{}' in paper with PMID{}: Got \"{}\", Expected \"{}\"" \
                             .format(key, pmid, value, expected_paper[key]))
 
