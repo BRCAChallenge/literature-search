@@ -3,7 +3,7 @@ FROM ubuntu:16.04
 MAINTAINER Audrey Musselman-Brown, almussel@ucsc.edu
 
 RUN apt-get update && apt-get install -y git python-gdbm python-pip xvfb firefox wget poppler-utils default-jre catdoc
-RUN pip install numpy
+RUN pip install numpy mock
 RUN pip install biopython pygr requests selenium==3.3.0 pyvirtualdisplay html2text synapseclient
 RUN pip install ga4gh==0.3.5 || true
 
@@ -19,6 +19,8 @@ ADD getpubs.py /opt/getpubs.py
 ADD brca_tests /opt/brca_tests
 ADD test_pipeline.py /opt/test_pipeline.py
 ADD test_correlate.py /opt/test_correlate.py
+ADD test_crawl.py /opt/test_crawl.py
+ADD test_findmutations.py /opt/test_findmutations.py
 
 # prevent keyring from prompting for password
 # maybe this should be $HOME/.local...
