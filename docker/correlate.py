@@ -6,6 +6,8 @@ import csv
 import json
 import sqlite3
 
+import re
+
 import pandas as pd
 
 import hgvs.parser
@@ -174,14 +176,25 @@ if __name__ == "__main__":
     print("Normalizing article hgvs mentions...")
     for article in articles["hgvsCoding"].fillna(""):
         for candidate in article.split("|"):
+            # Skip empty candidates
+            if not candidate:
+                continue
+            print("\"{}\"".format(candidate))
             try:
+                # Fix single deletions: NM_007300.3:c.1100C>None -> NM_007300.3:c.1100del
+                candidate = re.sub(r"(NM.*c\.\d*)([ATCG]>None)", r"\1del", candidate)
+
                 parsed = parser.parse_hgvs_variant(candidate)
-                print("Parsed:", candidate, parsed)
+                print("Parsed: {} into {}".format(candidate, parsed))
                 try:
                     if parsed.type == "c":
                         mapped = mapper.c_to_g(parsed)
-                        print("Mapped:", mapped)
+                        print("Mapped to {}".format(mapped))
+                    else:
+                        print("Only transcript supported")
                 except hgvs.exceptions.HGVSInvalidVariantError:
-                    print("Failed Mapping:", parsed)
+                    print("Failed Mapping: HGVSInvalidVariantError")
+                except hgvs.exceptions.HGVSInvalidIntervalError:
+                    print("Failed Mapping: HGVSInvalidIntervalError")
             except hgvs.exceptions.HGVSParseError:
-                print("Failed Parsing:", candidate)
+                print("Failed Parsing")
