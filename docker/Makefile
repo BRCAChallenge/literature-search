@@ -7,29 +7,48 @@ build:
 
 update-built:
 	# Get latest released built file which we use as input to correlate
-	wget -N -P /data \
-		https://brcaexchange.org/backend/downloads/releases/current_release.tar.gz
-	tar -zxsvf /data/current_release.tar.gz -C /data --skip-old-files
+	wget -qO- https://brcaexchange.org/backend/downloads/releases/current_release.tar.gz \
+		| tar xz -C /references/
+
+uta:
+	# Run local version of UTA storing database on host
+	docker run --rm -it \
+		--name $(USER)-uta \
+		--network=$(USER)-network \
+		-v `readlink -f ~/data/pubmunch/uta`:/var/lib/postgresql/data \
+		biocommons/uta:uta_20170117
 
 debug:
 	# Run the docker mapping out of local directory for development
 	docker run --rm -it \
-		--entrypoint /bin/bash \
+		--name $(USER)-crawler \
+		--network=$(USER)-network \
 		--user=`id -u`:`id -g` \
+		-e UTA_DB_URL=postgresql://anonymous@$(USER)-uta:5432/uta/uta_20170117 \
+		-e HGVS_SEQREPO_DIR=/references/seqrepo/2018-10-03 \
 		-v `readlink -f ~/.pubConf`:/.pubConf:ro \
-		-v `readlink -f ~/data/pubmunch/data`:/data \
-		-v `readlink -f ~/data/pubmunch/crawl`:/crawl \
+		-v `readlink -f ~/data/pubmunch/references`:/references \
 		-v `readlink -f ~/pubMunch`:/pubMunch \
+		-v `readlink -f ~/data/pubmunch/crawl`:/crawl \
 		-v `pwd`:/app \
+		--entrypoint /bin/bash \
 	  $(IMAGE_NAME)
+			
+get-pubs:
+	# Get list of all pmids with BRCA in them
+	wget -O /crawl/download/pmids.xml "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&tool=retrPubmed&email=maximilianh@gmail.com&term=brca%2A[Title/Abstract]&retstart=0&retmax=9999999" 
+	python getpubs.py /crawl/download/pmids.xml > /crawl/all_pmids.txt
+	# Pick 10 at random
+	shuf -n 10 /crawl/all_pmids.txt > /crawl/download/pmids.txt
+	cat /crawl/download/pmids.txt
 
 clean:
-	rm -rf /crawl/download/*
-	rm -rf /crawl/text/*
-	rm -rf /crawl/mutations.*
+	rm -rf /crawl/*
+	mkdir -p /crawl/download
 	echo 23199084 > /crawl/download/pmids.txt
-
-crawl: download convert find
+	# echo 30186769 >> /crawl/download/pmids.txt
+	
+crawl: download convert find correlate
 
 download:
 	# Crawl the new PMIDs
@@ -37,19 +56,27 @@ download:
 
 convert:
 	# Convert crawled papers to text
+	rm -rf /crawl/text/*
 	python /pubMunch/pubConvCrawler /crawl/download /crawl/text
 
 find:
 	# Find mutations in crawled papers
+	# rm -rf /crawl/mutations.*
 	python /pubMunch/pubFindMutations /crawl/text /crawl/mutations.tsv
 
 correlate:
+	# Match articles to mutations in BRCA Exchange
 	python /app/correlate.py \
 		/crawl/text/articles.db \
-		/data/output/release/built_with_change_types.tsv \
-		/crawl/mutations.tsv /crawl/litResults.json
+		/references/output/release/built_with_change_types.tsv \
+		/crawl/mutations.tsv /crawl/literature.json
 
-data:
+references:
+	# Unfinished download of big files - needs integration into others
+	# that are maintained within the pubMunch repo
 	curl http://hgwdev.soe.ucsc.edu/~max/pubs/tools/bigFiles.tgz
 	tar xfkv bigFiles.tgz
+	# Install large sequence database so hgvs runs local
+	seqrepo -r /references/seqrepo pull -i 2018-10-03
+	seqrepo --root-directory /references/seqrepo/ list-local-instances
 
