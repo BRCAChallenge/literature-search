@@ -39,7 +39,7 @@ get-pubs:
 	wget -O /crawl/download/pmids.xml "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&tool=retrPubmed&email=maximilianh@gmail.com&term=brca%2A[Title/Abstract]&retstart=0&retmax=9999999" 
 	python getpubs.py /crawl/download/pmids.xml > /crawl/all_pmids.txt
 	# Pick 10 at random
-	shuf -n 10 /crawl/all_pmids.txt > /crawl/download/pmids.txt
+	shuf -n 100 /crawl/all_pmids.txt > /crawl/download/pmids.txt
 	cat /crawl/download/pmids.txt
 
 clean:
@@ -57,7 +57,7 @@ download:
 convert:
 	# Convert crawled papers to text
 	rm -rf /crawl/text/*
-	python /pubMunch/pubConvCrawler /crawl/download /crawl/text
+	python /pubMunch/pubConvCrawler /crawl/download /crawl/text 2>&1 | tee /crawl/convert-log.txt
 
 find:
 	# Find mutations in crawled papers

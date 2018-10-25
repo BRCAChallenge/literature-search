@@ -25,7 +25,7 @@ RUN git clone https://github.com/rcurrie/pubMunch.git -b brca --single-branch /p
 
 # Add external tools
 # ADD https://archive.apache.org/dist/pdfbox/1.6.0/pdfbox-app-1.6.0.jar /opt
-RUN wget -O /opt/pdfbox-app-t.6.0.jar https://archive.apache.org/dist/pdfbox/1.6.0/pdfbox-app-1.6.0.jar
+RUN wget -O /opt/pdfbox-app-1.6.0.jar https://archive.apache.org/dist/pdfbox/1.6.0/pdfbox-app-1.6.0.jar
 RUN wget -qO- https://sourceforge.net/projects/docx2txt/files/latest/download | tar xz -C /opt
 # RUN chmod 777 /pubMunch/external/*
 
