@@ -26,6 +26,7 @@ def load(articles_path, mentions_path, variants_path):
                              ).dropna(subset=["hgvsCoding"])
 
     variants = pd.read_table(variants_path, header=0,
+                             # nrows=1000,
                              usecols=["pyhgvs_Genomic_Coordinate_38",
                                       "pyhgvs_cDNA", "Chr", "Pos", "Ref", "Alt"])
 
@@ -68,16 +69,21 @@ def hgvs_c_to_g(candidate, parser, mapper):
     return None, None
 
 
-def normalize_mentions(mentions, parser, mapper):
+def normalize_mentions(mentions, variants, parser, mapper):
     """
     Return a tuple list of (pmid, hgvs, mention) for all candidate
     hgvs found that parse and map.
     """
     def next_mention():
         for i, row in mentions.iterrows():
+            print("============================================================")
+            print("hgvsCoding:", row.hgvsCoding)
+            print("mutSnippets:", row.mutSnippets)
+            print("------------------------------------------------------------")
             for candidate in row.hgvsCoding.split("|"):
                 norm_c_hgvs, norm_g_hgvs = hgvs_c_to_g(candidate, parser, mapper)
                 if norm_g_hgvs:
+                    print("Found in build: {}".format(str(norm_g_hgvs) in variants.index))
                     yield (str(norm_g_hgvs), str(norm_c_hgvs), row.docId, row.mutSnippets)
 
     # For each mention try to parse and normalize the hgvs
@@ -121,14 +127,15 @@ if __name__ == "__main__":
     server = hgvs.dataproviders.uta.connect()
     mapper = hgvs.assemblymapper.AssemblyMapper(server, assembly_name="GRCh38")
 
-    print("Finding mentions...")
-    mentions = normalize_mentions(mentions, parser, mapper)
-
     print("Normalizing variants...")
     variants = normalize_variants(variants, parser, mapper)
-
     variants = variants.set_index("norm_g_hgvs", drop=False)
+    variants.to_csv("/crawl/variants-normalized.tsv", sep="\t")
+
+    print("Finding mentions...")
+    mentions = normalize_mentions(mentions, variants, parser, mapper)
     mentions = mentions.set_index("norm_g_hgvs", drop=True)
+
     common = mentions.join(variants, how="inner")
 
     literature = {

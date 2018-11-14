@@ -12,9 +12,10 @@ update-built:
 
 uta:
 	# Run local version of UTA storing database on host
+	# docker network create rcurrie-pubmunch-network
 	docker run --rm -it \
 		--name $(USER)-uta \
-		--network=$(USER)-network \
+		--network=$(USER)-pubmunch-network \
 		-v `readlink -f ~/data/pubmunch/uta`:/var/lib/postgresql/data \
 		biocommons/uta:uta_20170117
 
@@ -22,7 +23,7 @@ debug:
 	# Run the docker mapping out of local directory for development
 	docker run --rm -it \
 		--name $(USER)-crawler \
-		--network=$(USER)-network \
+		--network=$(USER)-pubmunch-network \
 		--user=`id -u`:`id -g` \
 		-e UTA_DB_URL=postgresql://anonymous@$(USER)-uta:5432/uta/uta_20170117 \
 		-e HGVS_SEQREPO_DIR=/references/seqrepo/2018-10-03 \
@@ -38,11 +39,15 @@ get-pubs:
 	# Get list of all pmids with BRCA in them
 	wget -O /crawl/download/pmids.xml "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&tool=retrPubmed&email=maximilianh@gmail.com&term=brca%2A[Title/Abstract]&retstart=0&retmax=9999999" 
 	python getpubs.py /crawl/download/pmids.xml > /crawl/all_pmids.txt
-	# Pick 10 at random
-	shuf -n 100 /crawl/all_pmids.txt > /crawl/download/pmids.txt
-	cat /crawl/download/pmids.txt
+	wc /crawl/all_pmids.txt
+	# Run all
+	cp /crawl/all_pmids.txt /crawl/download/pmids.txt
+	# Pick 1000 at random
+	# shuf -n 1000 /crawl/all_pmids.txt > /crawl/download/pmids.txt
+	# cat /crawl/download/pmids.txt
 
 clean:
+	# Remove all crawl files and reset to single paper to download
 	rm -rf /crawl/*
 	mkdir -p /crawl/download
 	echo 23199084 > /crawl/download/pmids.txt
@@ -66,17 +71,22 @@ find:
 
 correlate:
 	# Match articles to mutations in BRCA Exchange
-	python /app/correlate.py \
-		/crawl/text/articles.db \
-		/references/output/release/built_with_change_types.tsv \
-		/crawl/mutations.tsv /crawl/literature.json
+	python /app/correlate.py 2>&1 | tee /crawl/correlate-log.txt
 
 references:
 	# Unfinished download of big files - needs integration into others
 	# that are maintained within the pubMunch repo
-	curl http://hgwdev.soe.ucsc.edu/~max/pubs/tools/bigFiles.tgz
-	tar xfkv bigFiles.tgz
+	cp -r /pubMunch/data/* /references/
+	wget -qO- http://hgwdev.soe.ucsc.edu/~max/pubs/tools/bigFiles.tgz \
+		| tar xfzv - -C /references --strip-components 1
+
 	# Install large sequence database so hgvs runs local
+	mkdir -p /references/seqrepo
 	seqrepo -r /references/seqrepo pull -i 2018-10-03
 	seqrepo --root-directory /references/seqrepo/ list-local-instances
-
+	
+	wget -N -P /references http://hgdownload.cse.ucsc.edu/goldenPath/hg19/bigZips/hg19.2bit
+	wget -N -P /references http://hgdownload.cse.ucsc.edu/admin/exe/linux.x86_64/twoBitToFa
+	chmod +x /references/twoBitToFa
+	/references/twoBitToFa /references/hg19.2bit /references/variants/hg19.fa
+	rm /references/hg19.2bit
