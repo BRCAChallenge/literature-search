@@ -79,9 +79,16 @@ def normalize_mentions(mentions, variants, parser, mapper):
             print("============================================================")
             print("hgvsCoding:", row.hgvsCoding)
             print("mutSnippets:", row.mutSnippets)
-            print("------------------------------------------------------------")
+            assert row.mutSnippets
+            if type(row.mutSnippets) != str:
+                print("mutSnippets is not a string")
+                continue
             for candidate in row.hgvsCoding.split("|"):
-                norm_c_hgvs, norm_g_hgvs = hgvs_c_to_g(candidate, parser, mapper)
+                try:
+                    norm_c_hgvs, norm_g_hgvs = hgvs_c_to_g(candidate, parser, mapper)
+                except hgvs.exceptions.HGVSDataNotAvailableError:
+                    print("Failed Conversion: HGVSDataNotAvailableError ")
+                    continue
                 if norm_g_hgvs:
                     print("Found in build: {}".format(str(norm_g_hgvs) in variants.index))
                     yield (str(norm_g_hgvs), str(norm_c_hgvs), row.docId, row.mutSnippets)
@@ -122,6 +129,7 @@ if __name__ == "__main__":
     print("Found {} articles {} mentions and {} variants".format(
         articles.shape[0], mentions.shape[0], variants.shape[0]))
 
+    # Normalize and write intermediate files for exploration in jupyter
     print("Connecting to hgvs server and mappers...")
     parser = hgvs.parser.Parser()
     server = hgvs.dataproviders.uta.connect()
@@ -129,19 +137,33 @@ if __name__ == "__main__":
 
     print("Normalizing variants...")
     variants = normalize_variants(variants, parser, mapper)
-    variants = variants.set_index("norm_g_hgvs", drop=False)
+    variants = variants.set_index("norm_g_hgvs", drop=True)
     variants.to_csv("/crawl/variants-normalized.tsv", sep="\t")
 
-    print("Finding mentions...")
+    print("Normalizing mentions...")
     mentions = normalize_mentions(mentions, variants, parser, mapper)
     mentions = mentions.set_index("norm_g_hgvs", drop=True)
+    mentions.to_csv("/crawl/mentions-normalized.tsv", sep="\t")
 
-    common = mentions.join(variants, how="inner")
+    # Load intermediate files to ensure consistency from jupyter exploration
+    variants = pd.read_table("/crawl/variants-normalized.tsv", index_col="norm_g_hgvs")
+    mentions = pd.read_table("/crawl/mentions-normalized.tsv", index_col="norm_g_hgvs"
+                             ).drop_duplicates(["pmid", "snippet"])
 
-    literature = {
-        "papers": articles.set_index("pmid", drop=False).to_dict(orient="index"),
-        "variants": common.set_index(
-            "pyhgvs_Genomic_Coordinate_38", drop=False).to_dict(orient="index")
-    }
+    print("Found {} articles {} mentions and {} variants".format(
+        articles.shape[0], mentions.shape[0], variants.shape[0]))
+
+    variant_mentions = pd.merge(variants, mentions, left_index=True, right_index=True)
+    variant_mentions_dict = {
+        k: v.to_dict(orient="records")
+        for k, v in variant_mentions
+            .reset_index(level=0)
+            .set_index("pyhgvs_Genomic_Coordinate_38")
+            .groupby(["pyhgvs_Genomic_Coordinate_38"])}
+    aricles_dict = articles[articles.pmid.isin(variant_mentions.pmid)
+                            ].set_index("pmid", drop=False).to_dict(orient="index")
     with open("/crawl/literature.json", "w") as output:
-        output.write(json.dumps(literature))
+        output.write(json.dumps({
+            "papers": aricles_dict,
+            "variants": variant_mentions_dict,
+        }))

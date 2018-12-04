@@ -57,7 +57,7 @@ crawl: download convert find correlate
 
 download:
 	# Crawl the new PMIDs
-	python /pubMunch/pubCrawl2 -du --forceContinue /crawl/download
+	python /pubMunch/pubCrawl2 -duv --forceContinue /crawl/download 2>&1 | tee /crawl/download-log.txt
 
 convert:
 	# Convert crawled papers to text
@@ -67,7 +67,7 @@ convert:
 find:
 	# Find mutations in crawled papers
 	# rm -rf /crawl/mutations.*
-	python /pubMunch/pubFindMutations /crawl/text /crawl/mutations.tsv
+	python /pubMunch/pubFindMutations /crawl/text /crawl/mutations.tsv | tee /crawl/find-log.txt
 
 correlate:
 	# Match articles to mutations in BRCA Exchange
