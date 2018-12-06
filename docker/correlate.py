@@ -145,25 +145,26 @@ if __name__ == "__main__":
     mentions = mentions.set_index("norm_g_hgvs", drop=True)
     mentions.to_csv("/crawl/mentions-normalized.tsv", sep="\t")
 
-    # Load intermediate files to ensure consistency from jupyter exploration
-    variants = pd.read_table("/crawl/variants-normalized.tsv", index_col="norm_g_hgvs")
-    mentions = pd.read_table("/crawl/mentions-normalized.tsv", index_col="norm_g_hgvs"
-                             ).drop_duplicates(["pmid", "snippet"])
+    # For now the final export is in export.ipynb
+    # # Load intermediate files to ensure consistency from jupyter exploration
+    # variants = pd.read_table("/crawl/variants-normalized.tsv", index_col="norm_g_hgvs")
+    # mentions = pd.read_table("/crawl/mentions-normalized.tsv", index_col="norm_g_hgvs"
+    #                          ).drop_duplicates(["pmid", "snippet"])
 
-    print("Found {} articles {} mentions and {} variants".format(
-        articles.shape[0], mentions.shape[0], variants.shape[0]))
+    # print("Found {} articles {} mentions and {} variants".format(
+    #     articles.shape[0], mentions.shape[0], variants.shape[0]))
 
-    variant_mentions = pd.merge(variants, mentions, left_index=True, right_index=True)
-    variant_mentions_dict = {
-        k: v.to_dict(orient="records")
-        for k, v in variant_mentions
-            .reset_index(level=0)
-            .set_index("pyhgvs_Genomic_Coordinate_38")
-            .groupby(["pyhgvs_Genomic_Coordinate_38"])}
-    aricles_dict = articles[articles.pmid.isin(variant_mentions.pmid)
-                            ].set_index("pmid", drop=False).to_dict(orient="index")
-    with open("/crawl/literature.json", "w") as output:
-        output.write(json.dumps({
-            "papers": aricles_dict,
-            "variants": variant_mentions_dict,
-        }))
+    # variant_mentions = pd.merge(variants, mentions, left_index=True, right_index=True)
+    # variant_mentions_dict = {
+    #     k: v.to_dict(orient="records")
+    #     for k, v in variant_mentions
+    #         .reset_index(level=0)
+    #         .set_index("pyhgvs_Genomic_Coordinate_38")
+    #         .groupby(["pyhgvs_Genomic_Coordinate_38"])}
+    # aricles_dict = articles[articles.pmid.isin(variant_mentions.pmid)
+    #                         ].set_index("pmid", drop=False).to_dict(orient="index")
+    # with open("/crawl/literature.json", "w") as output:
+    #     output.write(json.dumps({
+    #         "papers": aricles_dict,
+    #         "variants": variant_mentions_dict,
+    #     }))
