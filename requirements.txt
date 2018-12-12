@@ -1,2 +1,10 @@
 beautifulsoup4
 requests
+biopython
+html2text
+pysqlite
+pygr
+numpy
+pandas
+hgvs
+biocommons.seqrepo
