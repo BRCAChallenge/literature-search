@@ -21,6 +21,7 @@ if __name__ == "__main__":
 
     # Extract pubmed id
     variants["pmid"] = variants["Variant/Reference"].str.extract(r"PMID(\d+)\:")
+    variants = variants[~variants["pmid"].isnull()]
 
     # Normalize by mapping back to genomic coordinates
     parser = hgvs.parser.Parser()
