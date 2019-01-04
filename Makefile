@@ -66,20 +66,21 @@ get-pubs:
 	# Get list of all pmids with BRCA in them
 	mkdir -p /crawl/download
 	wget -O /crawl/download/pmids.xml "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&tool=retrPubmed&email=maximilianh@gmail.com&term=brca%2A[Title/Abstract]&retstart=0&retmax=9999999" 
-	python getpubs.py /crawl/download/pmids.xml > /crawl/download/pmids.txt
+	python2 getpubs.py /crawl/download/pmids.xml > /crawl/download/pmids.txt
+	echo 24667779 > /crawl/download/pmids.txt
 
 download:
 	# Crawl the new PMIDs
-	python /pubMunch/pubCrawl2 -duv --forceContinue /crawl/download 2>&1 | tee /crawl/download-log.txt
+	python2 /pubMunch/pubCrawl2 -duv --forceContinue /crawl/download 2>&1 | tee /crawl/download-log.txt
 
 convert:
 	# Convert crawled papers to text
-	python /pubMunch/pubConvCrawler /crawl/download /crawl/text 2>&1 | tee /crawl/convert-log.txt
+	python2 /pubMunch/pubConvCrawler /crawl/download /crawl/text 2>&1 | tee /crawl/convert-log.txt
 
 find:
 	# Find mutations in crawled papers
-	python /pubMunch/pubFindMutations /crawl/text /crawl/mutations.tsv 2>&1 | tee /crawl/find-log.txt
+	python2 /pubMunch/pubFindMutations /crawl/text /crawl/mutations.tsv 2>&1 | tee /crawl/find-log.txt
 
 normalize:
 	# Match articles to mutations in BRCA Exchange
-	python /app/normalize.py 2>&1 | tee /crawl/normalize-log.txt
+	python3 /app/normalize.py 2>&1 | tee /crawl/normalize-log.txt

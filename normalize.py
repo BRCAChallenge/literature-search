@@ -78,7 +78,7 @@ def normalize_mentions(mentions, variants, parser, mapper):
         for i, row in mentions.iterrows():
             print("============================================================")
             print("hgvsCoding:", row.hgvsCoding)
-            print("mutSnippets:", row.mutSnippets)
+            print("mutSnippets:", row.mutSnippets.encode('utf8'))
             assert row.mutSnippets
             if type(row.mutSnippets) != str:
                 print("mutSnippets is not a string")

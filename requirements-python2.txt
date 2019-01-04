@@ -6,5 +6,3 @@ pysqlite
 pygr
 numpy
 pandas
-hgvs
-biocommons.seqrepo

@@ -1,10 +1,13 @@
-FROM ubuntu:16.04
+FROM ubuntu:18.04
 
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get upgrade -y && apt-get install -y \
   git \
   wget \
   unzip \
+  build-essential \
   python-pip \
+  python3-pip \
+  python3-dev \
   libssl-dev \
   libffi-dev \
   libxml2-dev \
@@ -32,5 +35,8 @@ WORKDIR /app
 ADD . /app
 
 RUN pip install --upgrade pip
-RUN pip install setuptools --upgrade
-RUN pip install --no-cache-dir -r requirements.txt
+# RUN pip install setuptools --upgrade
+RUN pip install --no-cache-dir -r requirements-python2.txt
+
+RUN pip3 install --upgrade pip
+RUN pip3 install --no-cache-dir -r requirements-python3.txt
