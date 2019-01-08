@@ -1,6 +1,7 @@
 """
 Normalize LOVD truth into pmid plus list of normalized genomic hgvs
 """
+import re
 import pandas as pd
 
 import hgvs.parser
@@ -38,8 +39,9 @@ if __name__ == "__main__":
             try:
                 norm_c_hgvs = parser.parse_hgvs_variant(candidate)
                 norm_g_hgvs = mapper.c_to_g(norm_c_hgvs)
-                pyhgvs_Genomic_Coordinate_38 = "{}:{}".format(
-                    row["Variant/Chromosome"], str(norm_g_hgvs).split(":")[1])
+                pyhgvs_Genomic_Coordinate_38 = "{}:{}:{}".format(
+                    row["Variant/Chromosome"],
+                    *re.findall(r"(g\.[\d,_]*)(.*?)$", str(norm_g_hgvs))[0])
                 print(row.pmid, norm_c_hgvs, norm_g_hgvs, pyhgvs_Genomic_Coordinate_38)
                 variants_normalized = variants_normalized.append(
                     {"pmid": row.pmid,
