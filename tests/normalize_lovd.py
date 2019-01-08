@@ -17,7 +17,7 @@ if __name__ == "__main__":
     brca2 = pd.read_table("tests/brca2LOVDTruthSet2017.tab", skiprows=1)
     brca2.rename(columns={c: c.split(" ")[1] for c in brca2.columns.values}, inplace=True)
     brca2["Variant/Transcript"] = "NM_000059.3"
-    brca1["Variant/Chromosome"] = "chr13"
+    brca2["Variant/Chromosome"] = "chr13"
 
     variants = pd.concat([brca1, brca2], sort=False)
 

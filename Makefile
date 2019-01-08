@@ -56,6 +56,8 @@ crawl: update-built get-pubs download convert find normalize
 clean:
 	# Remove all crawl files and reset to single paper to download
 	rm -rf /crawl/*
+	mkdir /crawl/download
+	echo 19423647 > /crawl/download/pmids.txt
 	
 update-built:
 	# Get latest released built file which we use as input to correlate
@@ -67,7 +69,6 @@ get-pubs:
 	mkdir -p /crawl/download
 	wget -O /crawl/download/pmids.xml "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&tool=retrPubmed&email=maximilianh@gmail.com&term=brca%2A[Title/Abstract]&retstart=0&retmax=9999999" 
 	python2 getpubs.py /crawl/download/pmids.xml > /crawl/download/pmids.txt
-	echo 24667779 > /crawl/download/pmids.txt
 
 download:
 	# Crawl the new PMIDs
