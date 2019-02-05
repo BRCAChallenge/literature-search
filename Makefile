@@ -54,10 +54,10 @@ references:
 crawl: update-built get-pubs download convert find normalize
 
 clean:
-	# Remove all crawl files and reset to single paper to download
+	# Remove all crawl files and reset to single PMID to download
 	rm -rf /crawl/*
 	mkdir /crawl/download
-	echo 19423647 > /crawl/download/pmids.txt
+	echo $(PMID) > /crawl/download/pmids.txt
 	
 update-built:
 	# Get latest released built file which we use as input to correlate
@@ -80,6 +80,8 @@ convert:
 
 find:
 	# Find mutations in crawled papers
+	# Update regext in case they have changed
+	cp -r /pubMunch/data/* /references/
 	python2 /pubMunch/pubFindMutations /crawl/text /crawl/mutations.tsv 2>&1 | tee /crawl/find-log.txt
 
 normalize:
