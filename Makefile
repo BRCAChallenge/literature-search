@@ -62,13 +62,14 @@ clean:
 update-built:
 	# Get latest released built file which we use as input to correlate
 	wget -qO- https://brcaexchange.org/backend/downloads/releases/current_release.tar.gz \
-		| tar xz -C /references/
+		| tar xz -C /crawl/
 
 get-pubs:
-	# Get list of all pmids with BRCA in them
+	# Get list of all pmids with BRCA in them and save timestamp of crawl
 	mkdir -p /crawl/download
 	wget -O /crawl/download/pmids.xml "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&tool=retrPubmed&email=maximilianh@gmail.com&term=brca%2A[Title/Abstract]&retstart=0&retmax=9999999" 
 	python2 getpubs.py /crawl/download/pmids.xml > /crawl/download/pmids.txt
+	echo $(date --iso-8601=seconds) > pubs-date.txt
 
 download:
 	# Crawl the new PMIDs
