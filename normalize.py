@@ -1,36 +1,12 @@
 """
-Normalize mentions of variants found in articles by pubMunch and BRCA Exchange
-to genomic coordinates.
+Normalize BRCA Exchange variants by parsing and mapping using the HGVS library
 """
 import re
-import sqlite3
-
 import pandas as pd
 
 import hgvs.parser
 import hgvs.dataproviders.uta
 import hgvs.assemblymapper
-
-
-def load(articles_path, mentions_path, variants_path):
-    """
-    Load articles and mentions found by the crawler as well as
-    variants in BRCA Exchange into pandas dataframes.
-    """
-    connection = sqlite3.connect(articles_path)
-    articles = pd.read_sql_query("SELECT * FROM articles", connection)
-
-    # Only load mentions that have coding hgvs at this point
-    mentions = pd.read_table(mentions_path, header=0,
-                             usecols=["docId", "hgvsCoding", "mutSnippets"]
-                             ).dropna(subset=["hgvsCoding"])
-
-    variants = pd.read_table(variants_path, header=0,
-                             # nrows=1000,
-                             usecols=["pyhgvs_Genomic_Coordinate_38",
-                                      "pyhgvs_cDNA", "Chr", "Pos", "Ref", "Alt"])
-
-    return articles, mentions, variants
 
 
 def hgvs_c_to_g(candidate, parser, mapper):
@@ -41,7 +17,9 @@ def hgvs_c_to_g(candidate, parser, mapper):
     """
     print(candidate)
     # Normalize single deletions: NM_007300.3:c.1100C>None -> NM_007300.3:c.1100del
-    candidate = re.sub(r"(NM.*c\.\d*)([ATCG]>None)", r"\1del", candidate)
+    # candidate = re.sub(r"(NM.*c\.\d*)([ATCG]>None)", r"\1del", candidate)
+    # Normalize single deletions: NM_007300.3:c.1100C>None -> NM_007300.3:c.1100delC
+    candidate = re.sub(r"(NM.*c\.\d*)([ATCG])>None", r"\1del\2", candidate)
 
     # TODO: Normalize multiple deletions and delins
     # TODO: Limit to only specific BRCA transcripts
@@ -56,7 +34,7 @@ def hgvs_c_to_g(candidate, parser, mapper):
             if parsed_hgvs.type == "c":
                 norm_g_hgvs = mapper.c_to_g(parsed_hgvs)
                 print("=> {}".format(norm_g_hgvs))
-                return parsed_hgvs, norm_g_hgvs
+                return str(parsed_hgvs), str(norm_g_hgvs)
             else:
                 print("Only coding variants (.c) supported")
         except hgvs.exceptions.HGVSInvalidVariantError:
@@ -66,38 +44,7 @@ def hgvs_c_to_g(candidate, parser, mapper):
     except hgvs.exceptions.HGVSParseError:
         print("Failed Parsing")
 
-    return None, None
-
-
-def normalize_mentions(mentions, variants, parser, mapper):
-    """
-    Return a tuple list of (pmid, hgvs, mention) for all candidate
-    hgvs found that parse and map.
-    """
-    def next_mention():
-        for i, row in mentions.iterrows():
-            print("============================================================")
-            print("hgvsCoding:", row.hgvsCoding)
-            print("mutSnippets:", row.mutSnippets.encode('utf8'))
-            assert row.mutSnippets
-            if type(row.mutSnippets) != str:
-                print("mutSnippets is not a string")
-                continue
-            for candidate in row.hgvsCoding.split("|"):
-                try:
-                    norm_c_hgvs, norm_g_hgvs = hgvs_c_to_g(candidate, parser, mapper)
-                except hgvs.exceptions.HGVSDataNotAvailableError:
-                    print("Failed Conversion: HGVSDataNotAvailableError ")
-                    continue
-                if norm_g_hgvs:
-                    print("Found in build: {}".format(str(norm_g_hgvs) in variants.index))
-                    yield (str(norm_g_hgvs), str(norm_c_hgvs), row.docId, row.mutSnippets)
-
-    # For each mention try to parse and normalize the hgvs
-    return pd.DataFrame(
-        [m for m in next_mention()],
-        columns=["norm_g_hgvs", "norm_c_hgvs", "pmid", "snippet"]
-    )
+    return "", ""
 
 
 def normalize_variants(variants, parser, mapper):
@@ -119,28 +66,61 @@ def normalize_variants(variants, parser, mapper):
     return variants
 
 
+def normalize_mentions(mentions, parser, mapper):
+    """
+    Return a tuple list of (pmid, hgvs, mention) for all candidate
+    hgvs found that parse and map.
+    """
+    # mentions = mentions.drop_duplicates(["hgvsProt", "hgvsCoding", "mutSnippets"])
+    mentions = mentions.drop_duplicates(["mutSnippets"])
+
+    def norm_mention(row):
+        print("============================================================")
+        print("hgvsCoding:", row.hgvsCoding)
+        print("mutSnippets:", row.mutSnippets.encode('utf8'))
+
+        if not row.mutSnippets or type(row.mutSnippets) != str:
+            print("mutSnippets is null or not a string")
+            return ""
+
+        for candidate in row.hgvsCoding.split("|"):
+            try:
+                norm_c_hgvs, norm_g_hgvs = hgvs_c_to_g(candidate, parser, mapper)
+            except hgvs.exceptions.HGVSDataNotAvailableError:
+                print("Failed Conversion: HGVSDataNotAvailableError ")
+                continue
+            if norm_g_hgvs:
+                print("Success", norm_c_hgvs, norm_g_hgvs)
+                return norm_g_hgvs
+        return ""
+
+    mentions["norm_g_hgvs"] = mentions.apply(norm_mention, axis=1)
+    return mentions
+
+
 if __name__ == "__main__":
-    print("Loading articles, mentions and variants...")
-    articles, mentions, variants = load(
-        "/crawl/download/articles.db",
-        "/crawl/mutations.tsv",
-        "/references/output/release/built_with_change_types.tsv")
-
-    print("Found {} articles {} mentions and {} variants".format(
-        articles.shape[0], mentions.shape[0], variants.shape[0]))
-
-    # Normalize and write intermediate files for exploration in jupyter
     print("Connecting to hgvs server and mappers...")
     parser = hgvs.parser.Parser()
     server = hgvs.dataproviders.uta.connect()
     mapper = hgvs.assemblymapper.AssemblyMapper(server, assembly_name="GRCh38")
+
+    print("Loading variants...")
+    variants = pd.read_csv("/crawl/output/release/built_with_change_types.tsv",
+                           sep="\t", header=0,
+                           usecols=["pyhgvs_Genomic_Coordinate_38",
+                                    "pyhgvs_cDNA", "Chr", "Pos", "Ref", "Alt", "Synonyms"])
+    print("Found {} variants".format(variants.shape[0]))
 
     print("Normalizing variants...")
     variants = normalize_variants(variants, parser, mapper)
     variants = variants.set_index("norm_g_hgvs", drop=True)
     variants.to_csv("/crawl/variants-normalized.tsv", sep="\t")
 
-    print("Normalizing mentions...")
-    mentions = normalize_mentions(mentions, variants, parser, mapper)
-    mentions = mentions.set_index("norm_g_hgvs", drop=True)
-    mentions.to_csv("/crawl/mentions-normalized.tsv", sep="\t")
+    # print("Loading mentions...")
+    # mentions = pd.read_csv("/crawl/mutations-trimmed.tsv",
+    #                        sep="\t", header=0, dtype="str").fillna("")
+    # print("Found {} mentions".format(mentions.shape[0]))
+
+    # print("Normalizing mentions...")
+    # mentions = normalize_mentions(mentions, parser, mapper)
+    # mentions.to_csv("/crawl/mentions-normalized.tsv", sep="\t")

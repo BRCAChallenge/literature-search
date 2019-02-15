@@ -10,7 +10,7 @@ uta:
 	# docker network create rcurrie-pubmunch-network
 	docker run --rm -it \
 		--name $(USER)-uta \
-		--network=$(USER)-pubmunch-network \
+		--network=$(USER)-network \
 		-v `readlink -f ~/data/pubmunch/uta`:/var/lib/postgresql/data \
 		biocommons/uta:uta_20170117
 
@@ -18,7 +18,7 @@ debug:
 	# Run the docker mapping out of local directory for development
 	docker run --rm -it \
 		--name $(USER)-crawler \
-		--network=$(USER)-pubmunch-network \
+		--network=$(USER)-network \
 		--user=`id -u`:`id -g` \
 		-e UTA_DB_URL=postgresql://anonymous@$(USER)-uta:5432/uta/uta_20170117 \
 		-e HGVS_SEQREPO_DIR=/references/seqrepo/2018-10-03 \
@@ -51,7 +51,7 @@ references:
 	seqrepo --root-directory /references/seqrepo/ list-local-instances
 	
 			
-crawl: update-built get-pubs download convert find normalize
+crawl: update-built get-pubs download convert find match
 
 clean:
 	# Remove all crawl files and reset to single PMID to download
@@ -84,7 +84,8 @@ find:
 	# Update regext in case they have changed
 	cp -r /pubMunch/data/* /references/
 	python2 /pubMunch/pubFindMutations /crawl/text /crawl/mutations.tsv 2>&1 | tee /crawl/find-log.txt
+	head -n -3 /crawl/mutations.tsv > /crawl/mutations-trimmed.tsv
 
-normalize:
-	# Match articles to mutations in BRCA Exchange
-	python3 /app/normalize.py 2>&1 | tee /crawl/normalize-log.txt
+match:
+	# Match articles to mutations in BRCA Exchange and export literature.json
+	python3 /app/match.py 2>&1 | tee /crawl/match-log.txt
