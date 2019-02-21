@@ -73,19 +73,19 @@ get-pubs:
 
 download:
 	# Crawl the new PMIDs
-	python2 /pubMunch/pubCrawl2 -duv --forceContinue /crawl/download 2>&1 | tee /crawl/download-log.txt
+	python2 -u /pubMunch/pubCrawl2 -duv --forceContinue /crawl/download 2>&1 | tee /crawl/download-log.txt
 
 convert:
 	# Convert crawled papers to text
-	python2 /pubMunch/pubConvCrawler /crawl/download /crawl/text 2>&1 | tee /crawl/convert-log.txt
+	python2 -u /pubMunch/pubConvCrawler /crawl/download /crawl/text 2>&1 | tee /crawl/convert-log.txt
 
 find:
 	# Find mutations in crawled papers
 	# Update regext in case they have changed
 	cp -r /pubMunch/data/* /references/
-	python2 /pubMunch/pubFindMutations /crawl/text /crawl/mutations.tsv 2>&1 | tee /crawl/find-log.txt
+	python2 -u /pubMunch/pubFindMutations /crawl/text /crawl/mutations.tsv 2>&1 | tee /crawl/find-log.txt
 	head -n -3 /crawl/mutations.tsv > /crawl/mutations-trimmed.tsv
 
 match:
 	# Match articles to mutations in BRCA Exchange and export literature.json
-	python3 /app/match.py 2>&1 | tee /crawl/match-log.txt
+	python3 -u /app/match.py 2>&1 | tee /crawl/match-log.txt

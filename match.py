@@ -76,6 +76,11 @@ def next_mention():
         # Note: Could always run but adds 40+ per variant...so only run if nothing else works
         if not matched:
             for text in set([t.strip() for t in row.texts.split("|")]):
+
+                # Skip very short texts, i.e. M4N to reduce false positive
+                if len(text) < 5:
+                    continue
+
                 for i, hit in variants[
                         variants.Synonyms.str.contains(text, regex=False)].iterrows():
                     # for i, hit in itertools.islice(
@@ -84,9 +89,9 @@ def next_mention():
                     matched = True
                     yield (hit.pyhgvs_Genomic_Coordinate_38, row.docId, row.mutSnippets, 3)
 
-        if not matched:
-            print("Failed to match: hgvsCoding={} Mapped={} Texts={}".format(
-                raw_hgvs, norm_g_hgvs, row.texts))
+        # if not matched:
+        #     print("Failed to match: hgvsCoding={} Mapped={} Texts={}".format(
+        #         raw_hgvs, norm_g_hgvs, row.texts))
 
 
 if __name__ == "__main__":
