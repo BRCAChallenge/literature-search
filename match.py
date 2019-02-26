@@ -1,24 +1,12 @@
 """
 Match variants found in papers to variants in BRCA Exchange
 """
-import os
 import re
-import functools
-# import itertools
 import pandas as pd
-
 import hgvs.parser
-import hgvs.dataproviders.uta
-import hgvs.assemblymapper
 
 
-parser = None
-mapper = None
-mentions = None
-
-
-@functools.lru_cache(maxsize=None)
-def parse_and_map_hgvs(candidate):
+def parse_hgvs(parser, candidate):
     assert candidate
 
     # Normalize single deletions: NM_007300.3:c.1100C>None -> NM_007300.3:c.1100delC
@@ -29,90 +17,70 @@ def parse_and_map_hgvs(candidate):
     # ex: 23199084	NM_007294.3:c.2681AA>None|NM_007300.3:c.2681AA>None
 
     try:
-        parsed_hgvs = parser.parse_hgvs_variant(candidate)
-        try:
-            return str(mapper.c_to_g(parsed_hgvs))
-        except hgvs.exceptions.HGVSInvalidVariantError:
-            print("Failed Mapping: (HGVSInvalidVariantError): {}".format(candidate))
-        except hgvs.exceptions.HGVSInvalidIntervalError:
-            print("Failed Mapping (HGVSInvalidIntervalError): {}".format(candidate))
-        except hgvs.exceptions.HGVSDataNotAvailableError:
-            print("Failed Mapping (HGVSDataNotAvailableError): {}".format(candidate))
-
+        return str(parser.parse_hgvs_variant(candidate))
     except hgvs.exceptions.HGVSParseError:
         print("Failed to parse: {}".format(candidate))
 
     return ""
 
 
-def next_mention():
-    for i, row in mentions.iterrows():
-        matched = False
-        norm_g_hgvs = ""
+def next_mention(row, parser):
+    matched = False
+    parsed_c_hgvs = ""
 
-        for raw_hgvs in set([r.strip() for r in row.hgvsCoding.split("|")]):
+    for raw_hgvs in set([r.strip() for r in row.hgvsCoding.split("|")]):
 
-            if not raw_hgvs:
+        if not raw_hgvs:
+            continue
+
+        parsed_c_hgvs = parse_hgvs(parser, raw_hgvs)
+
+        if not parsed_c_hgvs:
+            continue
+
+        # Try parsed hgvsCoding to pyhgvs_cDNA
+        hits = variants[variants.pyhgvs_cDNA.str.contains(parsed_c_hgvs)]
+        assert hits.shape[0] <= 1
+        if hits.shape[0]:
+            matched = True
+            yield (hits.iloc[0].pyhgvs_Genomic_Coordinate_38,
+                   row.docId, row.mutSnippets, 10)
+
+        # Try parsed hgvsCoding to synonym (BRCA Exchange synonyms replace : with .)
+        for i, hit in variants.loc[variants.Synonyms.str.contains(
+                parsed_c_hgvs.replace(":", "."), regex=False)].iterrows():
+            matched = True
+            yield (hit.pyhgvs_Genomic_Coordinate_38, row.docId, row.mutSnippets, 7)
+
+    # Try texts to synonym
+    # Note: Could always run but adds 40+ per variant...so only run if nothing else works
+    if not matched:
+        for text in set([t.strip() for t in row.texts.split("|")]):
+
+            # Skip very short texts, i.e. M4N to reduce false positive
+            if len(text) < 6:
                 continue
 
-            norm_g_hgvs = parse_and_map_hgvs(raw_hgvs)
-
-            if not norm_g_hgvs:
-                continue
-
-            # normalized to normalized
-            if norm_g_hgvs in variants:
+            for i, hit in variants[
+                    variants.Synonyms.str.contains(text, regex=False)].iterrows():
                 matched = True
-                yield (variants[norm_g_hgvs].pyhgvs_Genomic_Coordinate_38,
-                       row.docId, row.mutSnippets, 1)
+                # Longer matches score higher...
+                yield (hit.pyhgvs_Genomic_Coordinate_38,
+                       row.docId, row.mutSnippets, len(text) - 5)
 
-            # normalized to synonym (BRCA Exchange synonyms replace : with .)
-            for i, hit in variants.loc[variants.Synonyms.str.contains(
-                    norm_g_hgvs.replace(":", "."), regex=False)].iterrows():
-                matched = True
-                yield (hit.pyhgvs_Genomic_Coordinate_38, row.docId, row.mutSnippets, 2)
-
-        # texts to synonym
-        # Note: Could always run but adds 40+ per variant...so only run if nothing else works
-        if not matched:
-            for text in set([t.strip() for t in row.texts.split("|")]):
-
-                # Skip very short texts, i.e. M4N to reduce false positive
-                if len(text) < 5:
-                    continue
-
-                for i, hit in variants[
-                        variants.Synonyms.str.contains(text, regex=False)].iterrows():
-                    # for i, hit in itertools.islice(
-                    #     variants[variants.Synonyms.str.contains(
-                    #         text, regex=False)].iterrows(), 10):
-                    matched = True
-                    yield (hit.pyhgvs_Genomic_Coordinate_38, row.docId, row.mutSnippets, 3)
-
-        # if not matched:
-        #     print("Failed to match: hgvsCoding={} Mapped={} Texts={}".format(
-        #         raw_hgvs, norm_g_hgvs, row.texts))
+    if not matched:
+        print("Failed to match: hgvsCoding={} Mapped={} Texts={}".format(
+            raw_hgvs, parsed_c_hgvs, row.texts))
 
 
 if __name__ == "__main__":
-    print("Connecting to hgvs server and mappers...")
+    print("Creating HGVS parser...")
     parser = hgvs.parser.Parser()
-    mapper = hgvs.assemblymapper.AssemblyMapper(hgvs.dataproviders.uta.connect(),
-                                                assembly_name="GRCh38")
 
     print("Loading variants...")
-    if not os.path.exists("/crawl/variants-normalized.tsv"):
-        variants = pd.read_csv("/crawl/output/release/built_with_change_types.tsv",
-                               sep="\t", header=0, encoding="utf-8",
-                               usecols=["pyhgvs_Genomic_Coordinate_38", "pyhgvs_cDNA", "Synonyms"])
-        variants = variants.sort_values("pyhgvs_cDNA")
-
-        print("Normalizing variants...")
-        variants["norm_g_hgvs"] = variants["pyhgvs_cDNA"].apply(parse_and_map_hgvs)
-        variants = variants.set_index("norm_g_hgvs", drop=True)
-        variants.to_csv("/crawl/variants-normalized.tsv", sep="\t")
-    variants = pd.read_csv("/crawl/variants-normalized.tsv",
-                           sep="\t", header=0, encoding="utf-8", index_col="norm_g_hgvs")
+    variants = pd.read_csv("/crawl/output/release/built_with_change_types.tsv",
+                           sep="\t", header=0, encoding="utf-8",
+                           usecols=["pyhgvs_Genomic_Coordinate_38", "pyhgvs_cDNA", "Synonyms"])
     print("Found {} variants".format(variants.shape[0]))
 
     print("Loading mentions...")
@@ -124,10 +92,10 @@ if __name__ == "__main__":
     mentions = mentions.sort_values(["docId", "hgvsCoding"])
     print("Found {} mentions".format(mentions.shape[0]))
 
-    print("Matching mentions...")
+    hits = [m for _, row in mentions.iterrows() for m in next_mention(row, parser)]
     matches = pd.DataFrame(
-        [m for m in next_mention()],
-        columns=["pyhgvs_Genomic_Coordinate_38", "pmid", "snippets", "score"]
+        hits,
+        columns=["pyhgvs_Genomic_Coordinate_38", "pmid", "snippets", "points"]
     )
     matches = matches.set_index("pyhgvs_Genomic_Coordinate_38", drop=True)
     matches.to_csv("/crawl/mentions-matched.tsv", sep="\t")
