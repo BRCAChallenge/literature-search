@@ -2,10 +2,12 @@
 Match variants found in papers to variants in BRCA Exchange
 """
 import re
+import functools
 import pandas as pd
 import hgvs.parser
 
 
+@functools.lru_cache(maxsize=None)
 def parse_hgvs(parser, candidate):
     assert candidate
 
@@ -40,7 +42,10 @@ def next_mention(row, parser):
 
         # Try parsed hgvsCoding to pyhgvs_cDNA
         hits = variants[variants.pyhgvs_cDNA.str.contains(parsed_c_hgvs)]
-        assert hits.shape[0] <= 1
+        if hits.shape[0] > 1:
+            print("ERROR: Multiple matches on {} {} against ".format(raw_hgvs, parsed_c_hgvs))
+            print(hits)
+        # assert hits.shape[0] <= 1
         if hits.shape[0]:
             matched = True
             yield (hits.iloc[0].pyhgvs_Genomic_Coordinate_38,
@@ -68,9 +73,9 @@ def next_mention(row, parser):
                 yield (hit.pyhgvs_Genomic_Coordinate_38,
                        row.docId, row.mutSnippets, len(text) - 5)
 
-    if not matched:
-        print("Failed to match: hgvsCoding={} Mapped={} Texts={}".format(
-            raw_hgvs, parsed_c_hgvs, row.texts))
+    # if not matched:
+    #     print("Failed to match: hgvsCoding={} Mapped={} Texts={}".format(
+    #         raw_hgvs, parsed_c_hgvs, row.texts))
 
 
 if __name__ == "__main__":
