@@ -6,3 +6,5 @@ pysqlite
 pygr
 numpy
 pandas
+future
+ipython
