@@ -1,4 +1,4 @@
-# pubMunch-BRCA
+# literature-search
 
 Literature search pipeline for [BRCA Exchange](https://brcaexchange.org/)
 
@@ -17,11 +17,6 @@ Start up the docker and within it get all the refernces
 ```
 make debug
 make references
-```
-
-In a separate terminal run a local [Biocommons Universal Transcript Archive](https://github.com/biocommons/uta) server
-```
-make uta
 ```
 
 And finally crawl from within the crawler docker crawl
