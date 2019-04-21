@@ -108,6 +108,13 @@ def match(ctx):
     run("python3 -u /app/match.py 2>&1 | tee /crawl/match-log.txt")
 
 
+@cli.command(help="Export literature.json")
+@click.pass_context
+def export(ctx):
+    print("Exporting literature.json...")
+    run("python3 -u /app/export.py")
+
+
 @cli.command(help="Crawl latest papers...")
 @click.pass_context
 def crawl(ctx):
@@ -116,6 +123,7 @@ def crawl(ctx):
     ctx.invoke(convert)
     ctx.invoke(find)
     ctx.invoke(match)
+    ctx.invoke(export)
 
 
 if __name__ == "__main__":
