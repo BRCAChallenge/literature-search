@@ -56,9 +56,9 @@ def update(ctx):
     with open("/crawl/built_with_change_types.tsv", "wb") as f:
         f.write(buf.read())
 
-    os.makedirs("/crawl/download", exist_ok=True)
+    os.makedirs("/crawl", exist_ok=True)
     if ctx.obj["pmid"]:
-        with open("/crawl/download/pmids.txt", "w") as f:
+        with open("/crawl/pmids.txt", "w") as f:
             f.write(ctx.obj["pmid"])
     else:
         print("Updating list of pubmed ids from NCBI NLM...")
@@ -68,7 +68,7 @@ def update(ctx):
         response.raise_for_status()
         root = xml.etree.ElementTree.fromstring(response.content)
         assert root[3].tag == "IdList", root[3].tag
-        with open("/crawl/download/pmids.txt", "w") as f:
+        with open("/crawl/pmids.txt", "w") as f:
             f.write("\n".join([ID.text for ID in root[3]]))
     with open("/crawl/pubs-date.txt", "w") as f:
         f.write(datetime.datetime.now().isoformat(timespec="seconds"))
@@ -78,7 +78,7 @@ def update(ctx):
 @click.pass_context
 def download(ctx):
     print("Downloading papers...")
-    run("python2 -u /pubMunch/pubCrawl2 -u{} --forceContinue /crawl/download".format(
+    run("python2 -u /pubMunch/pubCrawl2 -u{} --forceContinue /crawl".format(
         "dv" if ctx.obj["debug"] else "") + " 2>&1 | tee /crawl/download-log.txt")
 
 
@@ -86,7 +86,7 @@ def download(ctx):
 @click.pass_context
 def convert(ctx):
     print("Converting papers to text...")
-    run("python2 -u /pubMunch/pubConvCrawler /crawl/download /crawl/text" +
+    run("python2 -u /pubMunch/pubConvCrawler /crawl /crawl/text" +
         " 2>&1 | tee /crawl/convert-log.txt")
 
 
@@ -95,8 +95,8 @@ def convert(ctx):
 def find(ctx):
     print("Finding variants...")
     run("cp -r /pubMunch/data/* /references/")  # Update regex in case its changed
-    run("python2 -u /pubMunch/pubFindMutations -d /crawl/text /crawl/mutations.tsv" +
-        " 2>&1 | tee /crawl/find-log.txt")
+    run("python2 -u /pubMunch/pubFindMutations {} /crawl/text /crawl/mutations.tsv".format(
+        "-d" if ctx.obj["debug"] else "") + " 2>&1 | tee /crawl/find-log.txt")
 
 
 @cli.command(help="Match variants to papers")
@@ -112,7 +112,7 @@ def match(ctx):
 @click.pass_context
 def export(ctx):
     print("Exporting literature.json...")
-    run("python3 -u /app/export.py")
+    run("python3 -u /app/export.py /crawl")
 
 
 @cli.command(help="Crawl latest papers...")

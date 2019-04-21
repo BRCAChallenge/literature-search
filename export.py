@@ -4,6 +4,7 @@ Export matched variants to literature.json
 import sys
 import datetime
 import json
+import argparse
 import sqlite3
 import pandas as pd
 
@@ -32,12 +33,17 @@ def top_papers_and_snippets(mentions, pyhgvs):
 
 
 if __name__ == "__main__":
-    connection = sqlite3.connect("file:/crawl/download/articles.db?mode=ro", uri=True)
+    parser = argparse.ArgumentParser(
+        description="Export literature.json")
+    parser.add_argument("path", help="Path to input artifacts")
+    args = parser.parse_args()
+
+    connection = sqlite3.connect("file:{}/articles.db?mode=ro".format(args.path), uri=True)
     articles = pd.read_sql_query("SELECT * FROM articles", connection)
     articles.pmid = articles.pmid.astype(str)
     print("{} articles loaded from the articles sqlite database".format(articles.shape[0]))
 
-    mentions = pd.read_csv("/crawl/mentions-matched.tsv", sep="\t", encoding="utf-8")
+    mentions = pd.read_csv("{}/mentions-matched.tsv".format(args.path), sep="\t", encoding="utf-8")
     mentions.pmid = mentions.pmid.astype(str)
     print("Total matched mentions: {}".format(mentions.shape[0]))
     mentions = mentions.drop_duplicates(["pyhgvs_Genomic_Coordinate_38", "pmid", "snippets"])
@@ -55,18 +61,18 @@ if __name__ == "__main__":
         remaining -= 1
 
     lit = {
-        "date": open("/crawl/pubs-date.txt").read().strip(),
+        "date": open("{}/pubs-date.txt".format(args.path)).read().strip(),
         "papers": articles[articles.pmid.isin(mentions.pmid)].set_index(
             "pmid", drop=False).to_dict(orient="index"),
         "variants": variants
     }
 
-    with open("/crawl/literature.json", "w") as output:
+    with open("{}/literature.json".format(args.path), "w") as output:
         output.write(json.dumps(lit, sort_keys=True))
 
     print("Exported {} variants in {} papers".format(
         len(lit["variants"].keys()), len(lit["papers"].keys())))
 
-    with open("/crawl/literature.json") as f:
+    with open("{}/literature.json".format(args.path)) as f:
         lit = json.loads(f.read())
     print("{} Papers and {} Variants exported".format(len(lit["papers"]), len(lit["variants"])))
