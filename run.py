@@ -124,6 +124,20 @@ def crawl(ctx):
     ctx.invoke(find)
     ctx.invoke(match)
     ctx.invoke(export)
+    print("Done.")
+
+
+@cli.command(help="Run LOVD test")
+@click.pass_context
+def lovd(ctx):
+    ctx.invoke(update)
+    run("cp tests/lovd-pmids.txt /crawl/pmids.txt")
+    ctx.invoke(download)
+    ctx.invoke(convert)
+    ctx.invoke(find)
+    ctx.invoke(match)
+    ctx.invoke(export)
+    print("Done.")
 
 
 if __name__ == "__main__":
