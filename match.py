@@ -83,7 +83,7 @@ if __name__ == "__main__":
     parser = hgvs.parser.Parser()
 
     print("Loading variants...")
-    variants = pd.read_csv("/crawl/output/release/built_with_change_types.tsv",
+    variants = pd.read_csv("/crawl/built_with_change_types.tsv",
                            sep="\t", header=0, encoding="utf-8",
                            usecols=["pyhgvs_Genomic_Coordinate_38", "pyhgvs_cDNA", "Synonyms"])
     print("Found {} variants".format(variants.shape[0]))

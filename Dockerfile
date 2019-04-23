@@ -24,7 +24,7 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y \
   && rm -rf /var/cache/apt/archives \
   && rm -rf /var/lib/apt/lists
 
-# Clone brca branch of pubMunch - switch to upstream after pull request
+# Add pubMunch from fork tracking master
 RUN git clone https://github.com/rcurrie/pubMunch.git -b brca --single-branch /pubMunch
 
 # Add external tools
@@ -35,8 +35,12 @@ WORKDIR /app
 ADD . /app
 
 RUN pip install --upgrade pip
-# RUN pip install setuptools --upgrade
 RUN pip install --no-cache-dir -r requirements-python2.txt
 
 RUN pip3 install --upgrade pip
 RUN pip3 install --no-cache-dir -r requirements-python3.txt
+
+ENV LC_ALL C.UTF-8
+ENV LANG C.UTF-8
+
+ENTRYPOINT ["python3", "run.py"]
