@@ -48,7 +48,8 @@ def references():
 @click.pass_context
 def update(ctx):
     print("Updating list of variants from BRCA Exchange...")
-    url = "https://brcaexchange.org/backend/downloads/releases/current_release.tar.gz"
+    # url = "https://brcaexchange.org/backend/downloads/releases/current_release.tar.gz"
+    url = "http://brcaexchange-prod.gi.ucsc.edu/backend/downloads/releases/current_release.tar.gz"
     response = requests.get(url)
     response.raise_for_status()
     results = tarfile.TarFile(fileobj=io.BytesIO(response.content))

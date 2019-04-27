@@ -14,7 +14,7 @@ debug:
 	docker run --rm -it \
 		--name $(IMAGE_NAME) \
 		--user=`id -u`:`id -g` \
-		-v `readlink -f ~/.pubConf`:/.pubConf:ro \
+		-v `readlink -f ~/pubConf`:/.pubConf:ro \
 		-v `readlink -f ~/data/literature-search/references`:/references \
 		-v `readlink -f ~/data/literature-search/crawl`:/crawl \
 		-v `pwd`:/app \

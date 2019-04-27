@@ -78,6 +78,7 @@ make debug
 Download the references:
 ```
 python3 run.py references
+```
 
 Crawl from within docker a single paper
 ```
