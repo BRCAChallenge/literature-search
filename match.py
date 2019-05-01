@@ -42,14 +42,12 @@ def next_mention(row, parser):
 
         # Try parsed hgvsCoding to pyhgvs_cDNA
         hits = variants[variants.pyhgvs_cDNA.str.contains(parsed_c_hgvs)]
-        if hits.shape[0] > 1:
+        if hits.shape[0] == 1:
+            matched = True
+            yield (hits.iloc[0].pyhgvs_Genomic_Coordinate_38, row.docId, row.mutSnippets, 10)
+        elif hits.shape[0] > 1:
             print("ERROR: Multiple matches on {} {} against ".format(raw_hgvs, parsed_c_hgvs))
             print(hits)
-        # assert hits.shape[0] <= 1
-        if hits.shape[0]:
-            matched = True
-            yield (hits.iloc[0].pyhgvs_Genomic_Coordinate_38,
-                   row.docId, row.mutSnippets, 10)
 
         # Try parsed hgvsCoding to synonym (BRCA Exchange synonyms replace : with .)
         for i, hit in variants.loc[variants.Synonyms.str.contains(
