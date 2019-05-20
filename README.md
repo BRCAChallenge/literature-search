@@ -62,6 +62,28 @@ You should find a literature.json file under the crawl directory with a list of 
   }
 }
 ```
+You can run each individual step of the crawler as well:
+
+```
+docker run brcachallenge/literature-search:latest
+Usage: run.py [OPTIONS] COMMAND [ARGS]...
+
+Options:
+  --debug / --no-debug  Generate debug output
+  --pmid TEXT           PMID to crawl
+  --help                Show this message and exit.
+
+Commands:
+  convert     Convert papers to text
+  crawl       Crawl latest papers...
+  download    Download papers
+  export      Export literature.json
+  find        Find variants in all papers text
+  lovd        Run LOVD test
+  match       Match variants to papers
+  references  Download references
+  update      Update list of variants and pubmed ids
+```
 
 # Developing and Debugging
 

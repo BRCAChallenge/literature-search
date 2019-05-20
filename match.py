@@ -47,7 +47,8 @@ def next_mention(row, parser):
             yield (hits.iloc[0].pyhgvs_Genomic_Coordinate_38, row.docId, row.mutSnippets, 10)
         elif hits.shape[0] > 1:
             print("ERROR: Multiple matches on {} {} against ".format(raw_hgvs, parsed_c_hgvs))
-            print(hits)
+            # print(hits)
+            print("Continuing...")
 
         # Try parsed hgvsCoding to synonym (BRCA Exchange synonyms replace : with .)
         for i, hit in variants.loc[variants.Synonyms.str.contains(
