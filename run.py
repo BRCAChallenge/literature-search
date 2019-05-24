@@ -130,6 +130,7 @@ def crawl(ctx):
     ctx.invoke(find)
     ctx.invoke(match)
     ctx.invoke(export)
+    ctx.invoke(stats)
     print("Done.")
 
 
