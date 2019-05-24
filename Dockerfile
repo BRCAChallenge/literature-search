@@ -44,5 +44,6 @@ RUN pip3 install --no-cache-dir -r requirements-python3.txt
 
 ENV LC_ALL C.UTF-8
 ENV LANG C.UTF-8
+ENV HOME /app
 
 ENTRYPOINT ["python3", "run.py"]
