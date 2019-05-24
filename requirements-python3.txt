@@ -1,4 +1,5 @@
 click
 hgvs
 ipython
+jupyter
 pandas

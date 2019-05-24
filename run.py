@@ -20,13 +20,10 @@ import click
 
 def run(command):
     """ Run a script synchronously in a sub-process piping its output back to ours """
-    process = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
-    while True:
-        line = process.stdout.readline().rstrip()
-        if line:
-            click.echo(line, err=True)
-        else:
-            break
+    process = subprocess.Popen(
+        command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True, close_fds=True)
+    for line in process.stdout:
+        click.echo(line.rstrip(), err=True)
 
 
 @click.group()
@@ -116,23 +113,18 @@ def export(ctx):
     run("python3 -u /app/export.py /crawl")
 
 
+@cli.command(help="Generate stats for current crawl")
+@click.pass_context
+def stats(ctx):
+    run("CRAWL_PATH=/crawl jupyter nbconvert"
+        + " --execute stats.ipynb --ExecutePreprocessor.timeout=None"
+        + " --to asciidoc --stdout --template ascii.tpl")
+
+
 @cli.command(help="Crawl latest papers...")
 @click.pass_context
 def crawl(ctx):
     ctx.invoke(update)
-    ctx.invoke(download)
-    ctx.invoke(convert)
-    ctx.invoke(find)
-    ctx.invoke(match)
-    ctx.invoke(export)
-    print("Done.")
-
-
-@cli.command(help="Run LOVD test")
-@click.pass_context
-def lovd(ctx):
-    ctx.invoke(update)
-    run("cp tests/lovd-pmids.txt /crawl/pmids.txt")
     ctx.invoke(download)
     ctx.invoke(convert)
     ctx.invoke(find)
