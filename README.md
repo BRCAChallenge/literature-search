@@ -18,7 +18,7 @@ Download references (only need to run once):
 ```
 docker run --rm -it \
   --user=`id -u`:`id -g` \
-  -v path/to/your/pubConf:/.pubConf:ro \
+  -v path/to/your/pubConf:/app/.pubConf:ro \
   -v path/to/references/storage:/references \
   -v path/to/crawl/storage:/crawl \
 	brcachallenge/literature-search:latest references
@@ -28,14 +28,23 @@ Download a single paper as a test:
 ```
 docker run --rm -it \
   --user=`id -u`:`id -g` \
-  -v path/to/your/pubConf:/.pubConf:ro \
+  -v path/to/your/pubConf:/app/.pubConf:ro \
   -v path/to/references/storage:/references \
   -v path/to/crawl/storage:/crawl \
 	brcachallenge/literature-search:latest --pmid 9042909 crawl
 ```
 
-You should find a literature.json file under the crawl directory with a list of the papers crawled, their abstract and then any variants found along with snippets around the mention of the variant. Remove the --pmid to crawl all papers. See run.py for additional sub-commands to just download, convert, find and export.
+Run a full crawl incrementally downloading any papers since the last crawl and output stats:
+```
+docker run --rm -it \
+  --user=`id -u`:`id -g` \
+  -v path/to/your/pubConf:/app/.pubConf:ro \
+  -v path/to/references/storage:/references \
+  -v path/to/crawl/storage:/crawl \
+	brcachallenge/literature-search:latest crawl
+```
 
+You should find a literature.json file under the crawl directory with a list of the papers crawled, their abstract and then any variants found along with snippets around the mention of the variant:
 ```
 {
   "date": "2019-04-23T16:27:27", 
