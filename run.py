@@ -119,7 +119,7 @@ def stats(ctx):
     run("CRAWL_PATH=/crawl jupyter nbconvert"
         + " --execute stats.ipynb --ExecutePreprocessor.timeout=None"
         + " --to markdown --stdout --no-prompt --template nbconvert.tpl"
-        + " 2>&1 | tee /crawl/literature-stats.md")
+        + " | tee /crawl/literature-stats.md")
 
 
 @cli.command(help="Crawl latest papers...")
