@@ -118,7 +118,7 @@ def export(ctx):
 def stats(ctx):
     run("CRAWL_PATH=/crawl jupyter nbconvert"
         + " --execute stats.ipynb --ExecutePreprocessor.timeout=None"
-        + " --to asciidoc --stdout --template ascii.tpl"
+        + " --to markdown --stdout --no-prompt --template nbconvert.tpl"
         + " 2>&1 | tee /crawl/literature-stats.md")
 
 
